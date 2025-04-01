@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -27,14 +28,16 @@ const Hero = () => {
               vitaminen en verzorgingsartikelen. Professioneel advies en snelle bezorging.
             </p>
             <div className="flex flex-wrap gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center px-6 py-3 rounded-lg bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-colors duration-200"
-              >
-                Ontdek Producten
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </motion.button>
+              <Link to="/categories">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="inline-flex items-center px-6 py-3 rounded-lg bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-colors duration-200"
+                >
+                  Ontdek Producten
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </motion.button>
+              </Link>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

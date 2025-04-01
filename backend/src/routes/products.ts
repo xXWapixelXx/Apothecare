@@ -12,7 +12,9 @@ router.get('/', async (req, res) => {
 
     // Filter by category if provided
     if (category) {
-      products = products.filter(product => product.category === category)
+      products = products.filter(product => 
+        product.category.toLowerCase() === String(category).toLowerCase()
+      )
     }
 
     // Sort products
