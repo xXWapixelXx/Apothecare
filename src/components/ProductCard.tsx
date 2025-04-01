@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
-import { ShoppingCart, Heart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
+import { formatPrice } from '../utils/formatPrice';
 
 interface ProductCardProps {
   product: {
@@ -15,6 +17,19 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { addItem } = useCart();
+
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      description: product.description,
+      quantity: 1,
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -31,10 +46,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       )}
 
-      {/* Wishlist Button */}
-      <button className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-emerald-50">
-        <Heart className="h-5 w-5 text-gray-600 hover:text-emerald-600 transition-colors" />
-      </button>
+      {/* Quick Add Button - Appears on Hover */}
+      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={handleAddToCart}
+          className="p-2 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition-colors duration-200"
+        >
+          <ShoppingCart className="w-5 h-5" />
+        </motion.button>
+      </div>
 
       {/* Image */}
       <div className="aspect-square overflow-hidden bg-gray-100">
@@ -66,7 +88,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-2xl font-bold text-gray-900">
-              €{product.price.toFixed(2)}
+              {formatPrice(product.price)}
             </span>
             <span className="text-sm text-gray-500">
               {product.stock > 0 ? 'Op voorraad' : 'Niet op voorraad'}
@@ -76,10 +98,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-colors duration-200"
+            onClick={handleAddToCart}
+            className="px-3 py-1.5 text-sm font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors duration-200"
           >
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            <span>Toevoegen</span>
+            In winkelwagen
           </motion.button>
         </div>
       </div>

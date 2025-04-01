@@ -5,6 +5,7 @@ import { ArrowRight, Search, Filter, ShoppingCart, Star, Heart, ChevronLeft, Che
 import ProductCard from '../components/ProductCard'
 import Loading from '../components/Loading'
 import Error from '../components/Error'
+import { useCart } from '../contexts/CartContext'
 
 interface Product {
   id: string
@@ -32,6 +33,7 @@ const ITEMS_PER_PAGE = 8
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { addItem } = useCart()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -125,8 +127,14 @@ export default function ProductsPage() {
   }
 
   const addToCart = (product: Product) => {
-    // Implement cart functionality
-    console.log('Added to cart:', product)
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      description: product.description,
+      quantity: 1,
+    })
   }
 
   const toggleFavorite = (product: Product) => {
@@ -342,6 +350,7 @@ export default function ProductsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
                 className={viewMode === 'grid' ? "group" : "group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"}
+                onClick={() => setQuickViewProduct(product)}
               >
                 <div className={viewMode === 'grid' 
                   ? "relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300"

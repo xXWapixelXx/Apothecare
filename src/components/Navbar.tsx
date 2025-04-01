@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Menu, X, Search } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { totalItems } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,9 +65,15 @@ const Navbar = () => {
               className="relative text-gray-600 hover:text-emerald-500 transition-colors duration-200"
             >
               <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                0
-              </span>
+              {totalItems > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
+                >
+                  {totalItems}
+                </motion.span>
+              )}
             </Link>
           </div>
 
@@ -111,9 +119,15 @@ const Navbar = () => {
               className="relative text-gray-600 hover:text-emerald-500 transition-colors duration-200"
             >
               <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                0
-              </span>
+              {totalItems > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
+                >
+                  {totalItems}
+                </motion.span>
+              )}
             </Link>
           </div>
         </div>
