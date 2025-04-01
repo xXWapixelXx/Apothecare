@@ -4,6 +4,9 @@ import CategoryGrid from './components/CategoryGrid';
 import ProductsPage from './pages/ProductsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import CartPage from './pages/CartPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ProfilePage from './pages/ProfilePage';
 import NotFound from './pages/NotFound';
 
 export default function AppRoutes() {
@@ -25,6 +28,9 @@ export default function AppRoutes() {
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/cart" element={<CartPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

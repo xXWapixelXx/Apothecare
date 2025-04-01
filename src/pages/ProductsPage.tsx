@@ -362,7 +362,7 @@ export default function ProductsPage() {
                     : "relative w-48 h-48 overflow-hidden rounded-xl"
                   }>
                     <img
-                      src={product.image}
+                      src={product.image || '/images/placeholder.png'}
                       alt={product.name}
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                     />
@@ -375,6 +375,11 @@ export default function ProductsPage() {
                     {product.isNew && (
                       <div className="absolute top-4 left-4 bg-emerald-500 text-white px-2 py-1 rounded-full text-sm font-medium">
                         Nieuw
+                      </div>
+                    )}
+                    {product.stock === 0 && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <span className="text-white font-semibold">Niet op voorraad</span>
                       </div>
                     )}
                     <button 
@@ -416,7 +421,7 @@ export default function ProductsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <span className={`font-bold text-emerald-600 ${viewMode === 'grid' ? 'text-2xl' : 'text-3xl'}`}>
-                          €{product.price.toFixed(2)}
+                          €{Number(product.price).toFixed(2)}
                         </span>
                         {product.discount && (
                           <span className="text-gray-500 line-through ml-2">
@@ -429,10 +434,15 @@ export default function ProductsPage() {
                           e.stopPropagation()
                           addToCart(product)
                         }}
-                        className="inline-flex items-center px-4 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                        disabled={product.stock === 0}
+                        className={`inline-flex items-center px-4 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors ${
+                          product.stock === 0
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : ''
+                        }`}
                       >
                         <ShoppingCart className="w-5 h-5 mr-2" />
-                        In winkelwagen
+                        {product.stock === 0 ? 'Niet beschikbaar' : 'In winkelwagen'}
                       </button>
                     </div>
                     {viewMode === 'list' && (
@@ -574,7 +584,7 @@ export default function ProductsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-3xl font-bold text-emerald-600">
-                      €{quickViewProduct.price.toFixed(2)}
+                      €{Number(quickViewProduct.price).toFixed(2)}
                     </span>
                     <span className="text-sm text-gray-500 ml-2">
                       {quickViewProduct.stock} op voorraad
