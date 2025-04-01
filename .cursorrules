@@ -1,0 +1,163 @@
+# Scratchpad
+
+## Project: Apothecare - Modern Pharmacy Webshop
+
+### Project Overview
+Building a modern, visually stunning pharmacy webshop with AI-powered features and a comprehensive dashboard.
+
+### Key Features
+[X] Defined main features for webshop and dashboard
+[X] Set up project structure
+[X] Create initial UI/UX design system
+[X] Implement core functionality (Product listing, filtering, sorting)
+[X] Set up backend with MySQL and Prisma
+[ ] Add AI chatbot integration
+[ ] Build admin dashboard
+
+### Technical Stack Planning
+- Frontend: React with TypeScript
+- UI Framework: Tailwind CSS + Shadcn/ui for modern components
+- Backend: Node.js with Express
+- Database: MySQL (XAMPP)
+- AI Integration: OpenAI API for chatbot
+- Authentication: NextAuth.js
+- Payment Processing: Stripe
+
+### UI/UX Design Principles
+- Modern, clean aesthetic
+- Micro-interactions and animations
+- Accessible color scheme
+- Responsive design
+- Dark/Light mode support
+- Loading states and transitions
+- Error handling with friendly messages
+
+### Lessons
+- Use modern UI components from shadcn/ui for consistent design
+- Implement proper loading states and error boundaries
+- Ensure accessibility standards are met
+- Use TypeScript for better type safety
+- Follow atomic design principles for components
+- Use React Router for client-side routing
+- Implement proper state management for filtering and sorting
+- Use Prisma for type-safe database operations
+- Implement proper error handling in API calls
+
+### Current Focus
+Setting up the admin dashboard for product management. 
+
+### Next Steps
+1. Database Schema Updates:
+   - Add User table for admin authentication
+   - Add Order table for customer orders
+   - Add OrderItem table for order details
+   - Add Category table for better product organization
+   - Add Customer table for user accounts
+   - Add Address table for shipping/billing addresses
+
+2. Admin Dashboard Features:
+   - User authentication and authorization
+   - Product management (CRUD operations)
+   - Order management
+   - Customer management
+   - Inventory tracking
+   - Sales analytics
+   - Category management
+
+3. API Endpoints to Create:
+   - Authentication routes
+   - User management routes
+   - Order management routes
+   - Category management routes
+   - Customer management routes
+   - Analytics routes
+
+4. Frontend Admin Components:
+   - Admin layout with sidebar navigation
+   - Dashboard overview
+   - Product management interface
+   - Order management interface
+   - Customer management interface
+   - Analytics dashboard
+   - Settings page
+
+### Database Schema Updates Needed
+```sql
+-- Users table for admin authentication
+CREATE TABLE User (
+    id VARCHAR(36) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'staff') NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Categories table
+CREATE TABLE Category (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Customers table
+CREATE TABLE Customer (
+    id VARCHAR(36) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    firstName VARCHAR(100) NOT NULL,
+    lastName VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Addresses table
+CREATE TABLE Address (
+    id VARCHAR(36) PRIMARY KEY,
+    customerId VARCHAR(36),
+    type ENUM('shipping', 'billing') NOT NULL,
+    street VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    postalCode VARCHAR(10) NOT NULL,
+    country VARCHAR(100) NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customerId) REFERENCES Customer(id)
+);
+
+-- Orders table
+CREATE TABLE Order (
+    id VARCHAR(36) PRIMARY KEY,
+    customerId VARCHAR(36) NOT NULL,
+    status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') NOT NULL,
+    total DECIMAL(10, 2) NOT NULL,
+    shippingAddressId VARCHAR(36) NOT NULL,
+    billingAddressId VARCHAR(36) NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customerId) REFERENCES Customer(id),
+    FOREIGN KEY (shippingAddressId) REFERENCES Address(id),
+    FOREIGN KEY (billingAddressId) REFERENCES Address(id)
+);
+
+-- OrderItems table
+CREATE TABLE OrderItem (
+    id VARCHAR(36) PRIMARY KEY,
+    orderId VARCHAR(36) NOT NULL,
+    productId VARCHAR(36) NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (orderId) REFERENCES Order(id),
+    FOREIGN KEY (productId) REFERENCES Product(id)
+);
+
+-- Add categoryId to Product table
+ALTER TABLE Product ADD COLUMN categoryId VARCHAR(36);
+ALTER TABLE Product ADD FOREIGN KEY (categoryId) REFERENCES Category(id);
+``` 
