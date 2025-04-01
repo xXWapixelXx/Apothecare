@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 import Hero from './components/Hero'
 import CategoryGrid from './components/CategoryGrid'
 import ProductsPage from './pages/ProductsPage'
+import CategoriesPage from './pages/CategoriesPage'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
               }
             />
             <Route path="/products" element={<ProductsPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { productRoutes } from './routes/products'
+import { categoryRoutes } from './routes/categories'
 
 dotenv.config()
 
@@ -18,6 +19,7 @@ app.use(express.json())
 
 // Routes
 app.use('/api/products', productRoutes)
+app.use('/api/categories', categoryRoutes)
 
 // Health check
 app.get('/health', (req, res) => {

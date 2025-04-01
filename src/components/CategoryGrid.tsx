@@ -1,108 +1,102 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Activity, Pill, Heart, SprayCan, Syringe, Stethoscope } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-const categories = [
-  {
-    id: 1,
-    name: 'Vitaminen',
-    description: 'Essentiële vitaminen voor uw dagelijkse gezondheid',
-    image: '/images/vitamins.jpg',
-    color: 'bg-orange-100',
-  },
-  {
-    id: 2,
-    name: 'Supplementen',
-    description: 'Voedingssupplementen voor optimale gezondheid',
-    image: '/images/supplements.jpg',
-    color: 'bg-blue-100',
-  },
-  {
-    id: 3,
-    name: 'Medicijnen',
-    description: 'Betrouwbare medicatie voor uw klachten',
-    image: '/images/medicines.jpg',
-    color: 'bg-green-100',
-  },
-  {
-    id: 4,
-    name: 'Persoonlijke Verzorging',
-    description: 'Producten voor uw dagelijkse verzorging',
-    image: '/images/personal-care.jpg',
-    color: 'bg-purple-100',
-  },
-  {
-    id: 5,
-    name: 'EHBO',
-    description: 'Eerste hulp en verbandmiddelen',
-    image: '/images/first-aid.jpg',
-    color: 'bg-red-100',
-  },
-  {
-    id: 6,
-    name: 'Gezondheid',
-    description: 'Algemene gezondheidsproducten',
-    image: '/images/health.jpg',
-    color: 'bg-teal-100',
-  },
-];
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  slug: string;
+  productCount: number;
+  icon: string;
+  color: string;
+  bgColor: string;
+  textColor: string;
+  image: string;
+}
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+const iconMap: { [key: string]: any } = {
+  'Activity': Activity,
+  'Pill': Pill,
+  'Heart': Heart,
+  'SprayCan': SprayCan,
+  'Syringe': Syringe,
+  'Stethoscope': Stethoscope
 };
 
 export default function CategoryGrid() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/categories');
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+        const data = await response.json();
+        setCategories(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center">Loading categories...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-600">Error: {error}</div>;
+  }
+
   return (
-    <motion.div
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-12"
-    >
-      {categories.map((category) => (
-        <motion.div
-          key={category.id}
-          variants={item}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={`relative overflow-hidden rounded-2xl shadow-lg ${category.color} transition-all duration-300 hover:shadow-xl`}
-        >
-          <Link to={`/products?category=${category.name.toLowerCase()}`}>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {categories.map((category, index) => {
+        const Icon = iconMap[category.icon] || Activity;
+        return (
+          <motion.div
+            key={category.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            className="group relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <div className="relative h-48 overflow-hidden">
+              <img
+                src={category.image}
+                alt={category.name}
+                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className={`absolute inset-0 bg-gradient-to-r ${category.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
+            </div>
             <div className="p-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {category.name}
-                </h3>
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="text-gray-600"
-                >
-                  <ArrowRight size={20} />
-                </motion.div>
+              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${category.bgColor} mb-4`}>
+                <Icon className={`w-6 h-6 ${category.textColor}`} />
               </div>
-              <p className="mt-2 text-gray-600">{category.description}</p>
-              <div className="mt-4 h-48 overflow-hidden rounded-lg">
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{category.name}</h2>
+              <p className="text-gray-600 mb-4">{category.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">{category.productCount} producten</span>
+                <Link
+                  to={`/products?category=${category.slug}`}
+                  className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Bekijk producten
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
               </div>
             </div>
-          </Link>
-        </motion.div>
-      ))}
-    </motion.div>
+          </motion.div>
+        );
+      })}
+    </div>
   );
 } 
