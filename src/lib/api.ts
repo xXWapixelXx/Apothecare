@@ -14,6 +14,25 @@ export interface Product {
   updatedAt: string
 }
 
+export interface Order {
+  id: string
+  customerName: string
+  total: number
+  status: "pending" | "processing" | "shipped" | "delivered"
+  date: string
+  items: number
+}
+
+export interface Customer {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  createdAt: string
+  updatedAt: string
+}
+
 export const api = {
   async getProducts(params?: { category?: string; sortBy?: string }) {
     const searchParams = new URLSearchParams()
@@ -57,4 +76,28 @@ export const api = {
     })
     if (!response.ok) throw new Error('Failed to delete product')
   },
+
+  async getOrders() {
+    const response = await fetch(`${API_URL}/orders`)
+    if (!response.ok) throw new Error('Failed to fetch orders')
+    return response.json() as Promise<Order[]>
+  },
+
+  async getOrder(id: string) {
+    const response = await fetch(`${API_URL}/orders/${id}`)
+    if (!response.ok) throw new Error('Failed to fetch order')
+    return response.json() as Promise<Order>
+  },
+
+  async getCustomers() {
+    const response = await fetch(`${API_URL}/customers`)
+    if (!response.ok) throw new Error('Failed to fetch customers')
+    return response.json() as Promise<Customer[]>
+  },
+
+  async getCustomer(id: string) {
+    const response = await fetch(`${API_URL}/customers/${id}`)
+    if (!response.ok) throw new Error('Failed to fetch customer')
+    return response.json() as Promise<Customer>
+  }
 } 

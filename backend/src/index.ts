@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 import { productRoutes } from './routes/products'
 import { categoryRoutes } from './routes/categories'
 import { authRoutes } from './routes/auth'
+import { orderRoutes } from './routes/orders'
+import { customerRoutes } from './routes/customers'
 
 dotenv.config()
 
@@ -22,6 +24,8 @@ app.use(express.json())
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/orders', orderRoutes)
+app.use('/api/customers', customerRoutes)
 
 // Health check
 app.get('/health', (req, res) => {
