@@ -60,13 +60,23 @@ export const api = {
     return response.json() as Promise<Product>
   },
 
-  async updateProduct(id: string, product: Partial<Product>) {
-    const response = await fetch(`${API_URL}/products/${id}`, {
+  async updateProduct(id: string, data: Partial<Product> | FormData) {
+    let options: RequestInit = {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product),
-    })
-    if (!response.ok) throw new Error('Failed to update product')
+    }
+
+    if (data instanceof FormData) {
+      options.body = data
+    } else {
+      options.headers = { 'Content-Type': 'application/json' }
+      options.body = JSON.stringify(data)
+    }
+
+    const response = await fetch(`${API_URL}/products/${id}`, options)
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to update product')
+    }
     return response.json() as Promise<Product>
   },
 
@@ -99,5 +109,48 @@ export const api = {
     const response = await fetch(`${API_URL}/customers/${id}`)
     if (!response.ok) throw new Error('Failed to fetch customer')
     return response.json() as Promise<Customer>
-  }
+  },
+
+  async getProfile() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch('http://localhost:3001/api/auth/profile', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch profile');
+    }
+
+    return response.json();
+  },
+
+  async login(email: string, password: string) {
+    const response = await fetch('http://localhost:3001/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to login');
+    }
+
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    return data.user;
+  },
+
+  async logout() {
+    localStorage.removeItem('token');
+  },
 } 

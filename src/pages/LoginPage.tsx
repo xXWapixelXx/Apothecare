@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { api } from '@/lib/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -19,26 +22,19 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Inloggen mislukt');
+      const user = await api.login(formData.email, formData.password);
+      toast.success('Successfully logged in!');
+      
+      // Check if we should redirect to admin panel
+      if (user.role === 'ADMIN') {
+        const from = location.state?.from?.pathname || '/admin';
+        navigate(from, { replace: true });
+      } else {
+        navigate('/');
       }
-
-      // Store token and user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/profile');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Er is iets misgegaan bij het inloggen');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Failed to log in. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -181,7 +177,7 @@ const LoginPage = () => {
               }`}
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
                   Inloggen

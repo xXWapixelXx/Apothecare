@@ -15,30 +15,25 @@ import {
   Settings,
   Bell,
   User,
+  X,
+  Upload,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { api } from "@/lib/api";
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: string | number;
-  image: string | null;
-  category: string;
-  stock: number;
-  status: "active" | "inactive" | "out_of_stock";
-  createdAt: string;
-  updatedAt: string;
-  isNew?: boolean;
-  sku?: string;
-}
+import type { Product as ApiProduct } from "@/lib/api";
 
 interface Category {
   id: string;
   name: string;
-  productCount: number;
   description?: string;
+  slug: string;
+  productCount?: number;
+}
+
+// Extend the API Product type with our UI-specific fields
+interface Product extends Omit<ApiProduct, 'category'> {
+  category: Category;
+  status: "active" | "inactive" | "out_of_stock";
 }
 
 export default function AdminProductsPage() {
@@ -58,6 +53,19 @@ export default function AdminProductsPage() {
     minStock: "",
   });
 
+  // Edit Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    category: "",
+    image: null as File | null,
+    imagePreview: "",
+  });
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
@@ -68,11 +76,22 @@ export default function AdminProductsPage() {
       setLoading(true);
       setError(null);
       const data = await api.getProducts();
-      setProducts(data.map(product => ({
+      
+      // Transform the API response to match our Product interface
+      const transformedProducts = data.map(product => ({
         ...product,
         status: product.stock > 0 ? "active" : "out_of_stock",
-        price: typeof product.price === 'string' ? parseFloat(product.price) : product.price
-      })));
+        category: typeof product.category === 'string' 
+          ? { 
+              id: '0', 
+              name: product.category, 
+              slug: product.category.toLowerCase(),
+              description: ''
+            }
+          : product.category as Category
+      })) as Product[];
+
+      setProducts(transformedProducts);
     } catch (err) {
       console.error("Error fetching products:", err);
       setError("Failed to fetch products. Please try again later.");
@@ -95,6 +114,8 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    
     try {
       await api.deleteProduct(id);
       setProducts((prev) => prev.filter((product) => product.id !== id));
@@ -102,6 +123,77 @@ export default function AdminProductsPage() {
     } catch (error) {
       console.error("Error deleting product:", error);
       toast.error("Failed to delete product");
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setEditForm({
+      name: product.name,
+      description: product.description,
+      price: String(product.price),
+      stock: String(product.stock),
+      category: product.category.name,
+      image: null,
+      imagePreview: product.image || "/placeholder-product.png",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditForm(prev => ({
+        ...prev,
+        image: file,
+        imagePreview: URL.createObjectURL(file),
+      }));
+    }
+  };
+
+  const handleEditSubmit = async (editedProduct: Partial<Product>) => {
+    try {
+      const formData = new FormData();
+      
+      // Add basic product data
+      formData.append('name', editForm.name);
+      formData.append('description', editForm.description);
+      formData.append('price', editForm.price);
+      formData.append('stock', editForm.stock);
+      formData.append('category', editForm.category);
+
+      // Add image if it exists
+      if (editForm.image) {
+        formData.append('image', editForm.image);
+      }
+
+      const updatedProduct = await api.updateProduct(editingProduct!.id, formData);
+      
+      // Transform the API response to match our Product interface
+      const transformedProduct: Product = {
+        ...updatedProduct,
+        status: updatedProduct.stock > 0 ? "active" : "out_of_stock",
+        category: typeof updatedProduct.category === 'string'
+          ? {
+              id: '0',
+              name: updatedProduct.category,
+              slug: updatedProduct.category.toLowerCase(),
+              description: ''
+            }
+          : updatedProduct.category as Category,
+        image: updatedProduct.image || "/placeholder-product.png"
+      };
+
+      setProducts(prev => 
+        prev.map(p => p.id === transformedProduct.id ? transformedProduct : p)
+      );
+
+      setIsEditModalOpen(false);
+      toast.success("Product updated successfully");
+    } catch (err) {
+      console.error("Error updating product:", err);
+      toast.error("Error updating product");
+      throw err;
     }
   };
 
@@ -124,7 +216,7 @@ export default function AdminProductsPage() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
       const matchesCategory =
-        selectedCategory === "all" || product.category === selectedCategory;
+        selectedCategory === "all" || product.category.name === selectedCategory;
       const matchesStatus =
         filters.status === "all" || product.status === filters.status;
       const matchesPrice =
@@ -258,7 +350,7 @@ export default function AdminProductsPage() {
             <option value="all">All Categories</option>
             {categories.map((category) => (
               <option key={category.id} value={category.name}>
-                {category.name} ({category.productCount})
+                {category.name} {category.productCount !== undefined ? `(${category.productCount})` : ''}
               </option>
             ))}
           </select>
@@ -442,12 +534,12 @@ export default function AdminProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {product.category}
+                          {product.category.name}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          €{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(String(product.price)).toFixed(2)}
+                          €{Number(product.price).toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -465,7 +557,7 @@ export default function AdminProductsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           className="text-emerald-600 hover:text-emerald-900 mr-4"
-                          onClick={() => console.log("Edit", product.id)}
+                          onClick={() => handleEdit(product)}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -484,6 +576,134 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
+
+      {/* Edit Product Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Edit Product</h2>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit(editingProduct!); }} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Product Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={editForm.category}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    required
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Price (€)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editForm.price}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Stock
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.stock}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, stock: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Product Image
+                </label>
+                <div className="flex items-center gap-4">
+                  {editForm.imagePreview && (
+                    <img
+                      src={editForm.imagePreview}
+                      alt="Preview"
+                      className="h-20 w-20 object-cover rounded-lg"
+                    />
+                  )}
+                  <label className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <Upload className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">Upload new image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-4 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

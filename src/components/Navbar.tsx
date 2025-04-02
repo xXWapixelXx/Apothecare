@@ -3,6 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Menu, X, Search, User, LogOut, ChevronDown, Package, Settings, Bell } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { api } from '@/lib/api';
+import { toast } from 'react-hot-toast';
+
+interface UserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -10,7 +19,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ firstName: string; lastName: string } | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const { totalItems } = useCart();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -23,12 +32,24 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    setIsAuthenticated(!!token);
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await api.getProfile();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Failed to fetch user profile:', error);
+          handleLogout();
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -43,10 +64,12 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    api.logout();
     setIsAuthenticated(false);
+    setUser(null);
     setIsUserMenuOpen(false);
     navigate('/login');
+    toast.success('Successfully logged out');
   };
 
   const navItems = [
@@ -88,7 +111,7 @@ const Navbar = () => {
           </div>
 
           {/* Search, Cart, and User Menu */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="flex items-center space-x-4" ref={userMenuRef}>
             <button className="text-gray-600 hover:text-emerald-500 transition-colors duration-200">
               <Search className="h-5 w-5" />
             </button>
@@ -108,87 +131,97 @@ const Navbar = () => {
               )}
             </Link>
 
-            <div className="relative" ref={userMenuRef}>
-              {isAuthenticated ? (
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
-                >
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+            {isAuthenticated ? (
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+              >
+                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                  {user ? (
+                    <span className="text-sm font-medium text-emerald-600">
+                      {user.firstName[0]}
+                    </span>
+                  ) : (
                     <User className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-              ) : (
-                <Link
-                  to="/login"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                    <User className="h-4 w-4 text-gray-600" />
-                  </div>
-                </Link>
-              )}
+                  )}
+                </div>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <User className="h-4 w-4 text-gray-600" />
+                </div>
+              </Link>
+            )}
 
-              <AnimatePresence>
-                {isUserMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-2 border border-gray-100"
-                  >
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">{user ? `${user.firstName} ${user.lastName}` : 'Mijn Account'}</p>
-                    </div>
-                    <div className="py-1">
-                      <Link
-                        to="/profile"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <User className="h-4 w-4 mr-3" />
-                        Profiel
-                      </Link>
-                      <Link
-                        to="/orders"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Package className="h-4 w-4 mr-3" />
-                        Bestellingen
-                      </Link>
-                      <Link
-                        to="/notifications"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Bell className="h-4 w-4 mr-3" />
-                        Notificaties
-                      </Link>
-                      <Link
-                        to="/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Settings className="h-4 w-4 mr-3" />
-                        Instellingen
-                      </Link>
-                    </div>
-                    <div className="px-4 py-2 border-t border-gray-100">
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                      >
-                        <LogOut className="h-4 w-4 mr-3" />
-                        Uitloggen
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <AnimatePresence>
+              {isUserMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-2 border border-gray-100"
+                  style={{ top: '100%' }}
+                >
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user ? `${user.firstName} ${user.lastName}` : 'Mijn Account'}
+                    </p>
+                    {user && (
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    )}
+                  </div>
+                  <div className="py-1">
+                    <Link
+                      to="/profile"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4 mr-3" />
+                      Profiel
+                    </Link>
+                    <Link
+                      to="/orders"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Package className="h-4 w-4 mr-3" />
+                      Bestellingen
+                    </Link>
+                    <Link
+                      to="/notifications"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Bell className="h-4 w-4 mr-3" />
+                      Notificaties
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Settings className="h-4 w-4 mr-3" />
+                      Instellingen
+                    </Link>
+                  </div>
+                  <div className="px-4 py-2 border-t border-gray-100">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    >
+                      <LogOut className="h-4 w-4 mr-3" />
+                      Uitloggen
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Mobile Menu Button */}
@@ -277,7 +310,6 @@ const Navbar = () => {
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Uitloggen
               </button>

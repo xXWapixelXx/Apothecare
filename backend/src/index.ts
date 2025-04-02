@@ -6,6 +6,7 @@ import { categoryRoutes } from './routes/categories'
 import { authRoutes } from './routes/auth'
 import { orderRoutes } from './routes/orders'
 import { customerRoutes } from './routes/customers'
+import path from 'path'
 
 dotenv.config()
 
@@ -19,6 +20,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }))
 app.use(express.json())
+
+// Serve static files from the public directory
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')))
 
 // Routes
 app.use('/api/products', productRoutes)

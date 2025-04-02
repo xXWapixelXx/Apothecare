@@ -91,7 +91,8 @@ export default function DashboardPage() {
         .map(product => ({
           ...product,
           price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
-          sales: product.sales || 0
+          sales: product.sales || 0,
+          category: typeof product.category === 'string' ? product.category : product.category.name
         }));
 
       // Get top products by sales
@@ -101,7 +102,8 @@ export default function DashboardPage() {
         .map(product => ({
           ...product,
           price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
-          sales: product.sales || 0
+          sales: product.sales || 0,
+          category: typeof product.category === 'string' ? product.category : product.category.name
         }));
 
       // Get recent orders
@@ -332,7 +334,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Orders & Low Stock Products */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
