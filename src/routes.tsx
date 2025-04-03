@@ -16,6 +16,7 @@ import AddProductPage from './pages/admin/AddProductPage';
 import OrdersPage from './pages/admin/OrdersPage';
 import CustomersPage from './pages/admin/CustomersPage';
 import SettingsPage from './pages/admin/SettingsPage';
+import AboutPage from './pages/AboutPage';
 
 export default function AppRoutes() {
   return (
@@ -40,6 +41,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/about" element={<AboutPage />} />
 
       {/* Admin Routes */}
       <Route
