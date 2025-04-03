@@ -3,6 +3,7 @@ import { CartProvider } from './contexts/CartContext'
 import AppRoutes from './routes'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import { AiSupport } from './components/AiSupport'
 
 function AppContent() {
   const location = useLocation();
@@ -16,6 +17,7 @@ function AppContent() {
           <AppRoutes />
         </main>
         {!isAdminRoute && <Footer />}
+        {!isAdminRoute && <AiSupport />}
       </div>
     </CartProvider>
   );
