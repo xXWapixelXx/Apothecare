@@ -1,4 +1,5 @@
 const API_URL = 'http://localhost:3001/api'
+const PHP_API_URL = 'http://localhost/php-api/api'
 
 export interface Product {
   id: string
@@ -50,6 +51,22 @@ export const api = {
     const response = await fetch(`${API_URL}/products?${searchParams}`)
     if (!response.ok) throw new Error('Failed to fetch products')
     return response.json() as Promise<Product[]>
+  },
+
+  async getUsers() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/users`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to fetch users');
+    return response.json();
   },
 
   async getProduct(id: string) {
@@ -134,6 +151,48 @@ export const api = {
     return response.json() as Promise<Customer>
   },
 
+  async updateCustomer(id: string, data: Partial<Customer>) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/customers/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update customer');
+    }
+
+    return response.json() as Promise<Customer>;
+  },
+
+  async deleteCustomer(id: string) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/customers/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to delete customer');
+    }
+  },
+
   async getProfile() {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -204,5 +263,14 @@ export const api = {
       console.error('Error in getCategories:', error);
       throw error;
     }
+  },
+
+  async getDashboardStats() {
+    const response = await fetch(`${API_URL}/dashboard/stats`);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to fetch dashboard stats');
+    }
+    return response.json();
   },
 } 

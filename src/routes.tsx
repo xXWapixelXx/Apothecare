@@ -13,6 +13,9 @@ import AdminLayout from './components/admin/AdminLayout';
 import DashboardPage from './pages/admin/DashboardPage';
 import AdminProductsPage from './pages/admin/ProductsPage';
 import AddProductPage from './pages/admin/AddProductPage';
+import OrdersPage from './pages/admin/OrdersPage';
+import CustomersPage from './pages/admin/CustomersPage';
+import SettingsPage from './pages/admin/SettingsPage';
 
 export default function AppRoutes() {
   return (
@@ -50,10 +53,9 @@ export default function AppRoutes() {
         <Route index element={<DashboardPage />} />
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="products/add" element={<AddProductPage />} />
-        <Route path="orders" element={<div>Orders Page</div>} />
-        <Route path="customers" element={<div>Customers Page</div>} />
-        <Route path="analytics" element={<div>Analytics Page</div>} />
-        <Route path="settings" element={<div>Settings Page</div>} />
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="customers" element={<CustomersPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       {/* 404 Route */}

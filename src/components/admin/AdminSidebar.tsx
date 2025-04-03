@@ -6,7 +6,6 @@ import {
   Package,
   ShoppingCart,
   Users,
-  BarChart2,
   Settings,
   ChevronLeft,
   LogOut,
@@ -22,7 +21,6 @@ const menuItems = [
   { path: '/admin/products', icon: Package, label: 'Products' },
   { path: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { path: '/admin/customers', icon: Users, label: 'Customers' },
-  { path: '/admin/analytics', icon: BarChart2, label: 'Analytics' },
   { path: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
