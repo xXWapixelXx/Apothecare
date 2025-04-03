@@ -21,6 +21,7 @@ import {
 import { toast } from "react-hot-toast";
 import { api } from "@/lib/api";
 import type { Product as ApiProduct } from "@/lib/api";
+import { useNavigate } from 'react-router-dom';
 
 interface Category {
   id: string;
@@ -65,6 +66,8 @@ export default function AdminProductsPage() {
     image: null as File | null,
     imagePreview: "",
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
@@ -363,7 +366,10 @@ export default function AdminProductsPage() {
             Filters
           </button>
 
-          <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2">
+          <button 
+            onClick={() => navigate('/admin/products/add')}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
+          >
             <Plus className="w-5 h-5" />
             Add Product
           </button>

@@ -33,6 +33,14 @@ export interface Customer {
   updatedAt: string
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  slug: string;
+  productCount?: number;
+}
+
 export const api = {
   async getProducts(params?: { category?: string; sortBy?: string }) {
     const searchParams = new URLSearchParams()
@@ -50,14 +58,29 @@ export const api = {
     return response.json() as Promise<Product>
   },
 
-  async createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) {
-    const response = await fetch(`${API_URL}/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product),
-    })
-    if (!response.ok) throw new Error('Failed to create product')
-    return response.json() as Promise<Product>
+  async createProduct(productData: FormData): Promise<Product> {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        body: productData,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create product');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw error;
+    }
   },
 
   async updateProduct(id: string, data: Partial<Product> | FormData) {
@@ -152,5 +175,34 @@ export const api = {
 
   async logout() {
     localStorage.removeItem('token');
+  },
+
+  async getCategories() {
+    try {
+      console.log('Fetching categories...');
+      const response = await fetch(`${API_URL}/categories`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch categories:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`Failed to fetch categories: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Categories fetched successfully:', data);
+      return data as Category[];
+    } catch (error) {
+      console.error('Error in getCategories:', error);
+      throw error;
+    }
   },
 } 

@@ -8,10 +8,11 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFound from './pages/NotFound';
-import AdminLayout from './components/admin/AdminLayout';
 import ProtectedRoute from './components/admin/ProtectedRoute';
+import AdminLayout from './components/admin/AdminLayout';
 import DashboardPage from './pages/admin/DashboardPage';
 import AdminProductsPage from './pages/admin/ProductsPage';
+import AddProductPage from './pages/admin/AddProductPage';
 
 export default function AppRoutes() {
   return (
@@ -48,6 +49,7 @@ export default function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="products" element={<AdminProductsPage />} />
+        <Route path="products/add" element={<AddProductPage />} />
         <Route path="orders" element={<div>Orders Page</div>} />
         <Route path="customers" element={<div>Customers Page</div>} />
         <Route path="analytics" element={<div>Analytics Page</div>} />
