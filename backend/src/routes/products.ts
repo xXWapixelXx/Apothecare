@@ -93,16 +93,58 @@ router.get('/:id', async (req, res) => {
 })
 
 // Create product
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   try {
+    const { name, description, category, price, stock } = req.body;
+    console.log('Received product data:', req.body);
+
+    // Find or create category
+    const categoryRecord = await prisma.category.findFirst({
+      where: { name: category }
+    });
+
+    if (!categoryRecord) {
+      console.error('Category not found:', category);
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+
+    // Prepare create data with proper type conversion
+    const createData: any = {
+      name,
+      description,
+      price: parseFloat(price),
+      stock: parseInt(stock),
+      categoryId: categoryRecord.id,
+    };
+
+    // If a new image was uploaded, add it to the create data
+    if (req.file) {
+      createData.image = `/uploads/${req.file.filename}`;
+    }
+
+    console.log('Creating product with data:', createData);
+
+    // Create the product
     const product = await prisma.product.create({
-      data: req.body
-    })
-    res.status(201).json(product)
+      data: createData,
+      include: {
+        category: true
+      }
+    });
+
+    // Add full image URL to response
+    const responseProduct = {
+      ...product,
+      image: product.image ? `http://localhost:3001${product.image}` : null
+    };
+
+    console.log('Created product:', responseProduct);
+    res.status(201).json(responseProduct);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create product' })
+    console.error('Error creating product:', error);
+    res.status(500).json({ error: 'Failed to create product' });
   }
-})
+});
 
 // Update product
 router.put('/:id', upload.single('image'), async (req, res) => {
