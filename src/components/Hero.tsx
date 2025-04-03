@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 const Hero = () => {
+  const [showAiSupport, setShowAiSupport] = useState(false);
+
   const scrollToTop = () => {
     const c = document.documentElement.scrollTop || document.body.scrollTop;
     if (c > 0) {
@@ -13,6 +16,13 @@ const Hero = () => {
         });
       });
     }
+  };
+
+  // Function to handle opening the AI support chat
+  const handleOpenAiSupport = () => {
+    setShowAiSupport(true);
+    // Dispatch a custom event that AiSupport component will listen to
+    window.dispatchEvent(new CustomEvent('openAiSupport'));
   };
 
   return (
@@ -84,6 +94,7 @@ const Hero = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
+                onClick={handleOpenAiSupport}
                 className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-emerald-600 font-semibold shadow-lg hover:bg-gray-50 transition-all duration-700"
               >
                 Vraag Advies

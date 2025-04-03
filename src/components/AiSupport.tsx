@@ -17,6 +17,18 @@ export function AiSupport() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Add event listener for opening the chat
+  useEffect(() => {
+    const handleOpenAiSupport = () => {
+      setIsOpen(true);
+    };
+
+    window.addEventListener('openAiSupport', handleOpenAiSupport);
+    return () => {
+      window.removeEventListener('openAiSupport', handleOpenAiSupport);
+    };
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -105,6 +117,7 @@ export function AiSupport() {
         className={cn(
           "fixed bottom-4 right-4 p-4 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition-all duration-200",
           "flex items-center gap-2",
+          "z-[100]",
           isOpen && "scale-0 opacity-0"
         )}
       >
@@ -119,7 +132,7 @@ export function AiSupport() {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed bottom-4 right-4 w-96 h-[600px] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden z-50"
+            className="fixed bottom-4 right-4 w-96 h-[600px] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden z-[100]"
           >
             {/* Header */}
             <div className="p-4 bg-emerald-600 text-white flex items-center justify-between">
