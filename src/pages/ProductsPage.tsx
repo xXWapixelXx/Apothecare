@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Search, Filter, ShoppingCart, Star, Heart, ChevronLeft, ChevronRight, X, Tag, Package, Truck, Shield, Clock } from 'lucide-react'
+import { ArrowRight, Search, Filter, ShoppingCart, Star, Heart, ChevronLeft, ChevronRight, X, Tag, Package, Truck, Shield, Clock, ChevronDown } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import Loading from '../components/Loading'
 import Error from '../components/Error'
@@ -14,8 +14,6 @@ interface Product {
   price: number
   image: string
   category: string
-  rating: number
-  reviewCount: number
   stock: number
   discount?: number
   isNew?: boolean
@@ -106,10 +104,10 @@ export default function ProductsPage() {
         return a.price - b.price
       case 'price-desc':
         return b.price - a.price
-      case 'rating':
-        return b.rating - a.rating
-      case 'newest':
-        return 0 // Implement based on your data structure
+      case 'name-asc':
+        return a.name.localeCompare(b.name)
+      case 'name-desc':
+        return b.name.localeCompare(a.name)
       default:
         return 0
     }
@@ -214,17 +212,20 @@ export default function ProductsPage() {
               </button>
             </div>
           </div>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 rounded-full border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all duration-300"
-          >
-            <option value="popular">Meest populair</option>
-            <option value="price-asc">Prijs: Laag naar hoog</option>
-            <option value="price-desc">Prijs: Hoog naar laag</option>
-            <option value="rating">Best beoordeeld</option>
-            <option value="newest">Nieuwste eerst</option>
-          </select>
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="appearance-none w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 cursor-pointer hover:border-emerald-500 transition-colors focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            >
+              <option value="popular">Meest populair</option>
+              <option value="price-asc">Prijs: Laag naar hoog</option>
+              <option value="price-desc">Prijs: Hoog naar laag</option>
+              <option value="name-asc">Naam: A tot Z</option>
+              <option value="name-desc">Naam: Z tot A</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* Filter Panel */}
@@ -395,23 +396,6 @@ export default function ProductsPage() {
 
                   {/* Content */}
                   <div className={viewMode === 'grid' ? "p-6" : "flex-1"}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(product.rating)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        ({product.reviewCount})
-                      </span>
-                    </div>
                     <h3 className={`font-bold text-gray-900 mb-2 ${viewMode === 'grid' ? 'text-xl' : 'text-2xl'}`}>
                       {product.name}
                     </h3>
@@ -558,23 +542,6 @@ export default function ProductsPage() {
                 </button>
               </div>
               <div className="p-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.floor(quickViewProduct.rating)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    ({quickViewProduct.reviewCount} beoordelingen)
-                  </span>
-                </div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
                   {quickViewProduct.name}
                 </h2>
