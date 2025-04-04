@@ -156,53 +156,110 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-teal-600/20"></div>
-        <div className="container mx-auto px-4 py-24 relative">
+      <div className="relative min-h-[600px] overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+        {/* Animated background shapes */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Large gradient circles */}
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-emerald-300/30 to-teal-300/30 rounded-full blur-3xl animate-float-slow"></div>
+          <div className="absolute top-1/2 -right-48 w-96 h-96 bg-gradient-to-br from-cyan-300/30 to-emerald-300/30 rounded-full blur-3xl animate-float-slow-reverse"></div>
+          <div className="absolute -bottom-24 left-1/3 w-96 h-96 bg-gradient-to-br from-teal-300/30 to-cyan-300/30 rounded-full blur-3xl animate-float"></div>
+          
+          {/* Pattern overlay */}
+          <div className="absolute inset-0" style={{ 
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2320B2AA' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            opacity: 0.5
+          }}></div>
+
+          {/* Floating elements */}
+          <div className="absolute top-20 left-20 w-12 h-12 border-4 border-emerald-200/50 rounded-lg animate-float-slow transform rotate-45"></div>
+          <div className="absolute top-40 right-40 w-8 h-8 border-4 border-teal-200/50 rounded-full animate-float"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 border-4 border-cyan-200/50 rounded-lg animate-float-slow-reverse transform -rotate-12"></div>
+          
+          {/* Small decorative dots */}
+          <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+          <div className="absolute top-1/3 left-1/3 w-2 h-2 bg-teal-400 rounded-full animate-pulse delay-300"></div>
+          <div className="absolute bottom-1/4 right-1/3 w-2 h-2 bg-cyan-400 rounded-full animate-pulse delay-700"></div>
+        </div>
+
+        {/* Content with backdrop blur */}
+        <div className="relative container mx-auto px-4 py-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <h1 className="text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-6xl font-bold text-gray-900 mb-6 drop-shadow-sm">
               Ontdek Onze{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">
-                Producten
+              <span className="relative inline-block">
+                <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">
+                  Producten
+                </span>
+                <span className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-emerald-200 to-teal-200 -rotate-1 rounded"></span>
               </span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-600 mb-8 drop-shadow-sm">
               Vind de perfecte gezondheidsproducten voor jouw behoeften.
             </p>
             <div className="relative max-w-xl mx-auto">
-              <input
-                type="text"
-                placeholder="Zoek een product..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-6 py-4 rounded-full border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all duration-300 pl-12"
-              />
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <div className="absolute inset-0 bg-white/50 rounded-full blur-xl"></div>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Zoek een product..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-6 py-4 rounded-full border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200/50 outline-none transition-all duration-300 pl-12 shadow-lg"
+                />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-emerald-600 w-5 h-5" />
+              </div>
             </div>
 
-            {/* Category Pills */}
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
+            {/* Category Pills - made more compact */}
+            <div className="flex flex-wrap justify-center gap-2 mb-6 mt-12">
               {['Pijnstillers', 'Vitamines & Supplementen', 'Verzorging', 'EHBO'].map((category) => (
                 <motion.button
                   key={category}
                   onClick={() => handleCategoryChange(category)}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, y: -1 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 shadow-sm backdrop-blur-md ${
                     selectedCategory === category
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/25'
-                      : 'bg-white/80 backdrop-blur-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/25'
+                      : 'bg-white/30 text-gray-700 hover:bg-white/50 hover:text-emerald-600'
                   }`}
                 >
                   {category}
                 </motion.button>
               ))}
             </div>
+
+            {/* Scroll to Products Button */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              className="mt-8"
+            >
+              <motion.button
+                onClick={() => productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="group relative inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/25 transition-all duration-300"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="relative z-10 font-medium text-base">
+                  Bekijk alle producten
+                </span>
+                <motion.div
+                  className="relative z-10"
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </motion.div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 blur-lg opacity-0 group-hover:opacity-50 transition-opacity duration-300" />
+              </motion.button>
+            </motion.div>
           </motion.div>
         </div>
       </div>
