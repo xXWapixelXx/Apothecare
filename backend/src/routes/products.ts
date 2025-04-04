@@ -36,7 +36,14 @@ const upload = multer({
 router.get('/', async (req, res) => {
   try {
     const { category, sortBy } = req.query
+    console.log('Received query params:', { category, sortBy })
+
     let products = await prisma.product.findMany({
+      where: category ? {
+        category: {
+          name: category as string
+        }
+      } : undefined,
       include: {
         category: true
       }
@@ -47,13 +54,6 @@ router.get('/', async (req, res) => {
       ...product,
       image: product.image ? `http://localhost:3001${product.image}` : null
     }))
-
-    // Filter by category if provided
-    if (category) {
-      products = products.filter(product => 
-        product.category.name.toLowerCase() === String(category).toLowerCase()
-      )
-    }
 
     // Sort products
     if (sortBy) {
@@ -67,13 +67,22 @@ router.get('/', async (req, res) => {
         case 'newest':
           products.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
           break
+        case 'name-asc':
+          products.sort((a, b) => a.name.localeCompare(b.name))
+          break
+        case 'name-desc':
+          products.sort((a, b) => b.name.localeCompare(a.name))
+          break
       }
     }
 
     res.json(products)
   } catch (error) {
-    console.error('Error fetching products:', error)
-    res.status(500).json({ error: 'Failed to fetch products' })
+    console.error('Error in /products route:', error)
+    res.status(500).json({ 
+      error: 'Failed to fetch products',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    })
   }
 })
 

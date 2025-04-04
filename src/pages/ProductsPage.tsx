@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Search, Filter, ShoppingCart, Star, Heart, ChevronLeft, ChevronRight, X, Tag, Package, Truck, Shield, Clock, ChevronDown } from 'lucide-react'
@@ -46,24 +46,39 @@ export default function ProductsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
+  const productsRef = useRef<HTMLDivElement>(null)
 
   const selectedCategoryParam = searchParams.get('category') || ''
   const selectedSortParam = searchParams.get('sort') || 'newest'
 
   useEffect(() => {
     fetchProducts()
-  }, [selectedCategoryParam, selectedSortParam])
+  }, [selectedCategory, sortBy])
 
   const fetchProducts = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`http://localhost:3001/api/products?category=${selectedCategoryParam}&sortBy=${selectedSortParam}`)
+      
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (selectedCategory) {
+        params.append('category', selectedCategory)
+      }
+      if (sortBy) {
+        params.append('sortBy', sortBy)
+      }
+
+      const response = await fetch(`http://localhost:3001/api/products?${params.toString()}`)
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to fetch products' })) as ErrorResponse
+        const errorData = await response.json()
+        console.error('Server error response:', errorData)
         throw new Error(errorData.error || 'Failed to fetch products')
       }
+      
       const data = await response.json()
+      console.log('Received products:', data)
       setProducts(data)
     } catch (err) {
       console.error('Error fetching products:', err)
@@ -79,23 +94,17 @@ export default function ProductsPage() {
   }
 
   const handleCategoryChange = (category: string) => {
-    if (category) {
-      searchParams.set('category', category)
-    } else {
-      searchParams.delete('category')
-    }
-    setSearchParams(searchParams)
+    console.log('Changing category to:', category)
+    setSelectedCategory(category)
+    // Scroll to products section with smooth animation
+    productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = !searchTerm || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
-    const matchesCategory = !selectedCategory || product.category === selectedCategory
-    const matchesBrand = !selectedBrand || product.brand === selectedBrand
-    const matchesTags = selectedTags.length === 0 || 
-      selectedTags.every(tag => product.tags?.includes(tag))
-    return matchesSearch && matchesPrice && matchesCategory && matchesBrand && matchesTags
+    return matchesSearch
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -252,11 +261,11 @@ export default function ProductsPage() {
                     >
                       Alle categorieën
                     </button>
-                    {['Vitaminen', 'Supplementen', 'Medicijnen', 'Persoonlijke Verzorging', 'EHBO', 'Gezondheid'].map(
+                    {['Pijnstillers', 'Vitamines & Supplementen', 'Verzorging', 'EHBO'].map(
                       (category) => (
                         <button
                           key={category}
-                          onClick={() => setSelectedCategory(category)}
+                          onClick={() => handleCategoryChange(category)}
                           className={`block w-full text-left px-3 py-2 rounded-lg ${
                             selectedCategory === category
                               ? 'bg-emerald-100 text-emerald-800'
@@ -325,7 +334,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Products Grid/List */}
-      <div className="container mx-auto px-4 py-12">
+      <div ref={productsRef} className="container mx-auto px-4 py-12">
         <div className="flex justify-between items-center mb-6">
           <div className="text-sm text-gray-600">
             {sortedProducts.length} producten gevonden
