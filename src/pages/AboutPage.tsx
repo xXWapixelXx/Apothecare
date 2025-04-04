@@ -151,7 +151,7 @@ export default function AboutPage() {
               image: '/images/pharmacist-1.jpg',
             },
             {
-              name: 'Thomas de Vries',
+              name: 'Thomas Groeneveld',
               role: 'Farmaceutisch Specialist',
               image: '/images/pharmacist-2.jpg',
             },

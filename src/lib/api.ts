@@ -221,12 +221,17 @@ export const api = {
       body: JSON.stringify({ email, password }),
     });
 
+    const data = await response.json();
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to login');
+      throw {
+        response: {
+          status: response.status,
+          data: data
+        }
+      };
     }
 
-    const data = await response.json();
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     return data.user;

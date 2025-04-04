@@ -23,7 +23,7 @@ const LoginPage = () => {
 
     try {
       const user = await api.login(formData.email, formData.password);
-      toast.success('Successfully logged in!');
+      toast.success('Succesvol ingelogd!');
       
       // Check if we should redirect to admin panel
       if (user.role === 'ADMIN') {
@@ -32,9 +32,27 @@ const LoginPage = () => {
       } else {
         navigate('/');
       }
-    } catch (error) {
+
+      // Refresh the page after a short delay to ensure the navigation is complete
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('Failed to log in. Please check your credentials.');
+      
+      // Check if it's an axios error with response
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'Ongeldige inloggegevens';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } else if (!navigator.onLine) {
+        setError('Geen internetverbinding');
+        toast.error('Geen internetverbinding');
+      } else {
+        setError('Server niet bereikbaar. Probeer het later opnieuw.');
+        toast.error('Server niet bereikbaar');
+      }
     } finally {
       setIsLoading(false);
     }

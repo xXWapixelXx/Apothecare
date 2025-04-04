@@ -77,7 +77,6 @@ const Navbar = () => {
     { name: 'Producten', path: '/products' },
     { name: 'Categorieën', path: '/categories' },
     { name: 'Over Ons', path: '/about' },
-    { name: 'Contact', path: '/contact' },
   ];
 
   return (
