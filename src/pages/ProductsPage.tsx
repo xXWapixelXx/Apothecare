@@ -95,7 +95,8 @@ export default function ProductsPage() {
 
   const handleCategoryChange = (category: string) => {
     console.log('Changing category to:', category)
-    setSelectedCategory(category)
+    // If clicking the already selected category, deselect it
+    setSelectedCategory(prevCategory => prevCategory === category ? '' : category)
     // Scroll to products section with smooth animation
     productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -182,6 +183,25 @@ export default function ProductsPage() {
                 className="w-full px-6 py-4 rounded-full border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all duration-300 pl-12"
               />
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            </div>
+
+            {/* Category Pills */}
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              {['Pijnstillers', 'Vitamines & Supplementen', 'Verzorging', 'EHBO'].map((category) => (
+                <motion.button
+                  key={category}
+                  onClick={() => handleCategoryChange(category)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                    selectedCategory === category
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/25'
+                      : 'bg-white/80 backdrop-blur-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
+                  }`}
+                >
+                  {category}
+                </motion.button>
+              ))}
             </div>
           </motion.div>
         </div>
