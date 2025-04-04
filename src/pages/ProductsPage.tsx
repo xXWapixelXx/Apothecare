@@ -202,17 +202,25 @@ export default function ProductsPage() {
               Vind de perfecte gezondheidsproducten voor jouw behoeften.
             </p>
             <div className="relative max-w-xl mx-auto">
-              <div className="absolute inset-0 bg-white/50 rounded-full blur-xl"></div>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Zoek een product..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-6 py-4 rounded-full border-2 border-gray-200/50 bg-white/70 backdrop-blur-md focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200/50 outline-none transition-all duration-300 pl-12 shadow-lg"
-                />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-emerald-600 w-5 h-5" />
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full opacity-30 group-hover:opacity-100 blur transition duration-500"></div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Zoek een product..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-6 py-4 rounded-full border-2 border-transparent bg-white/80 backdrop-blur-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all duration-300 pl-12 shadow-lg relative z-10"
+                    />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-20" />
+                  </div>
+                </div>
+              </motion.div>
             </div>
 
             {/* Category Pills - made more compact */}
