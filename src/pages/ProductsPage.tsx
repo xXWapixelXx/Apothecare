@@ -30,12 +30,11 @@ interface ErrorResponse {
 const ITEMS_PER_PAGE = 8
 
 export default function ProductsPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const { addItem } = useCart()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [sortBy, setSortBy] = useState('popular')
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100])
@@ -48,6 +47,7 @@ export default function ProductsPage() {
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const productsRef = useRef<HTMLDivElement>(null)
 
+  const searchQuery = searchParams.get('q') || ''
   const selectedCategoryParam = searchParams.get('category') || ''
   const selectedSortParam = searchParams.get('sort') || 'newest'
 
@@ -102,9 +102,9 @@ export default function ProductsPage() {
   }
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = !searchTerm || 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = !searchQuery || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesSearch
   })
 
@@ -201,27 +201,6 @@ export default function ProductsPage() {
             <p className="text-xl text-gray-600 mb-8 drop-shadow-sm">
               Vind de perfecte gezondheidsproducten voor jouw behoeften.
             </p>
-            <div className="relative max-w-xl mx-auto">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full opacity-30 group-hover:opacity-100 blur transition duration-500"></div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Zoek een product..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-6 py-4 rounded-full border-2 border-transparent bg-white/80 backdrop-blur-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all duration-300 pl-12 shadow-lg relative z-10"
-                    />
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-20" />
-                  </div>
-                </div>
-              </motion.div>
-            </div>
 
             {/* Category Pills - made more compact */}
             <div className="flex flex-wrap justify-center gap-2 mb-6 mt-12">

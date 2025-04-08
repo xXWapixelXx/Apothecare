@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Menu, X, Search, User, LogOut, ChevronDown, Package, Settings, Bell } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
@@ -15,13 +15,17 @@ interface UserData {
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
   const { totalItems } = useCart();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchQuery = searchParams.get('q') || '';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,6 +76,18 @@ const Navbar = () => {
     toast.success('Successfully logged out');
   };
 
+  const handleSearch = (query: string) => {
+    setSearchParams({ q: query });
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSearchOpen(false);
+    if (searchQuery) {
+      navigate(`/products?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Producten', path: '/products' },
@@ -118,9 +134,62 @@ const Navbar = () => {
 
           {/* Search, Cart, and User Menu */}
           <div className="flex items-center space-x-4" ref={userMenuRef}>
-            <button className="text-gray-600 hover:text-emerald-500 transition-colors duration-200">
+            <button 
+              onClick={() => {
+                setIsSearchOpen(true);
+                setTimeout(() => searchInputRef.current?.focus(), 0);
+              }}
+              className="text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+            >
               <Search className="h-5 w-5" />
             </button>
+
+            {/* Search Modal */}
+            <AnimatePresence>
+              {isSearchOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/5 backdrop-blur-[2px] z-50 flex items-start justify-center pt-32"
+                  onClick={() => setIsSearchOpen(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0, y: -20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: -20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="w-full max-w-3xl mx-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <form onSubmit={handleSearchSubmit} className="relative">
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition duration-500"></div>
+                        <div className="relative flex items-center gap-4 bg-white/80 backdrop-blur-md rounded-2xl p-4 shadow-lg border border-white/20">
+                          <Search className="w-6 h-6 text-emerald-500" />
+                          <input
+                            ref={searchInputRef}
+                            type="text"
+                            placeholder="Zoek producten..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchParams({ q: e.target.value })}
+                            className="w-full bg-transparent border-none outline-none text-xl placeholder:text-gray-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setIsSearchOpen(false)}
+                            className="p-2 hover:bg-emerald-50/50 rounded-full transition-colors"
+                          >
+                            <X className="w-5 h-5 text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <Link
               to="/cart"
               className="relative text-gray-600 hover:text-emerald-500 transition-colors duration-200"
@@ -264,7 +333,13 @@ const Navbar = () => {
             </Link>
           ))}
           <div className="flex items-center space-x-4 px-3 py-2">
-            <button className="text-gray-600 hover:text-emerald-500 transition-colors duration-200">
+            <button 
+              onClick={() => {
+                setIsSearchOpen(true);
+                setTimeout(() => searchInputRef.current?.focus(), 0);
+              }}
+              className="text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+            >
               <Search className="h-5 w-5" />
             </button>
             <Link

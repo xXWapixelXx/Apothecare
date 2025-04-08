@@ -108,7 +108,7 @@ export function AiSupport() {
 
       const chatRequest: ChatRequest = {
         message: userMessage.content,
-        context: "Je bent de ApotheCare assistent. je zegt je bent de AI Assistent van ApotheCare. Geef korte antwoorden. Verwijs bij medische vragen naar een zorgprofessional. je hebt klanten die je vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten.",
+        context: "Je bent de ApotheCare assistent. Geef korte antwoorden. Verwijs bij medische vragen naar een zorgprofessional. je hebt klanten die je vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten.",
         history: history
       };
 
