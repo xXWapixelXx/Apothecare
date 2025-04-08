@@ -108,11 +108,11 @@ export function AiSupport() {
 
       const chatRequest: ChatRequest = {
         message: userMessage.content,
-        context: "Je bent de professionele AI-assistent van ApotheCare. Je communiceert in een zakelijke en vriendelijke toon in het Nederlands. Je helpt klanten met vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten. Je gebruikt formele 'u' in plaats van informele 'je'. Je geeft duidelijke en accurate informatie, maar herinnert gebruikers er altijd aan om voor medisch advies een zorgprofessional te raadplegen. Je houdt je antwoorden beknopt en professioneel.",
+        context: "Je bent de ApotheCare assistent. je zegt je bent de AI Assistent van ApotheCare. Geef korte antwoorden. Verwijs bij medische vragen naar een zorgprofessional. je hebt klanten die je vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten.",
         history: history
       };
 
-      setActiveProvider(ChatProvider.ChatGPT);
+      setActiveProvider(ChatProvider.Mistral);
       const result = await chatService.sendMessage(chatRequest);
       
       const assistantMessage: Message = {
@@ -154,7 +154,7 @@ export function AiSupport() {
   // Get icon for current provider
   const getProviderIcon = (provider?: ChatProvider) => {
     switch(provider) {
-      case ChatProvider.ChatGPT:
+      case ChatProvider.Mistral:
         return <Zap className="w-4 h-4 text-indigo-500" />;
       case ChatProvider.LocalLLM:
         return <Server className="w-4 h-4 text-emerald-500" />;
@@ -166,8 +166,8 @@ export function AiSupport() {
   // Get tooltip text for provider
   const getProviderTooltip = (provider?: ChatProvider) => {
     switch(provider) {
-      case ChatProvider.ChatGPT:
-        return "Aangedreven door ChatGPT";
+      case ChatProvider.Mistral:
+        return "Aangedreven door Mistral AI";
       case ChatProvider.LocalLLM:
         return "Aangedreven door lokale AI";
       default:
@@ -218,7 +218,7 @@ export function AiSupport() {
                         title={getProviderTooltip(activeProvider)}
                       >
                         {getProviderIcon(activeProvider)}
-                        {activeProvider === ChatProvider.ChatGPT && <span>ChatGPT</span>}
+                        {activeProvider === ChatProvider.Mistral && <span>Mistral</span>}
                       </div>
                     )}
                   </div>
@@ -335,7 +335,7 @@ export function AiSupport() {
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
                       <span className="text-sm text-gray-500">
-                        {activeProvider === ChatProvider.ChatGPT && "Verbinden met ChatGPT..."}
+                        {activeProvider === ChatProvider.Mistral && "Verbinden met Mistral AI..."}
                         {!activeProvider && "Antwoord genereren..."}
                       </span>
                     </div>

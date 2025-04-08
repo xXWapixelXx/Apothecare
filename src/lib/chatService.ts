@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { getEnvVar } from './env';
+import { getEnvVar, ENV_KEYS } from './env';
 
 // Configuration
 const TIMEOUT_MS = 10000;
@@ -8,7 +8,7 @@ const MAX_RETRIES = 2;
 
 // Supported providers
 export enum ChatProvider {
-  ChatGPT = 'chatgpt',
+  Mistral = 'mistral',
   LocalLLM = 'local'
 }
 
@@ -79,27 +79,27 @@ const callLocalLLM = async (request: ChatRequest): Promise<string> => {
  * Get API key from environment variables
  */
 const getAPIKey = (): string | null => {
-  const openaiApiKey = getEnvVar('VITE_OPENAI_API_KEY');
-  return openaiApiKey && !openaiApiKey.includes('YOUR_') && !openaiApiKey.includes('your_') 
-    ? openaiApiKey 
+  const mistralApiKey = getEnvVar(ENV_KEYS.MISTRAL_API_KEY);
+  return mistralApiKey && !mistralApiKey.includes('YOUR_') && !mistralApiKey.includes('your_') 
+    ? mistralApiKey 
     : null;
 };
 
 /**
- * Call the OpenAI API
+ * Call the Mistral AI API
  */
-const callOpenAIAPI = async (request: ChatRequest): Promise<string> => {
+const callMistralAPI = async (request: ChatRequest): Promise<string> => {
   try {
-    const openaiApiKey = getAPIKey();
+    const mistralApiKey = getAPIKey();
     
-    if (!openaiApiKey) {
-      throw new ChatError('OpenAI API key is missing', ChatProvider.ChatGPT);
+    if (!mistralApiKey) {
+      throw new ChatError('Mistral API key is missing', ChatProvider.Mistral);
     }
     
     const response = await axios.post<{
       choices: Array<{ message: { content: string } }>;
-    }>('https://api.openai.com/v1/chat/completions', {
-      model: "gpt-3.5-turbo",
+    }>('https://api.mistral.ai/v1/chat/completions', {
+      model: "mistral-tiny",
       messages: [
         {
           role: "system",
@@ -115,7 +115,7 @@ const callOpenAIAPI = async (request: ChatRequest): Promise<string> => {
       max_tokens: 500
     }, {
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        'Authorization': `Bearer ${mistralApiKey}`,
         'Content-Type': 'application/json'
       },
       timeout: request.timeout || TIMEOUT_MS
@@ -123,19 +123,19 @@ const callOpenAIAPI = async (request: ChatRequest): Promise<string> => {
 
     const content = response.data?.choices?.[0]?.message?.content;
     if (!content) {
-      throw new ChatError('Invalid response from OpenAI API', ChatProvider.ChatGPT);
+      throw new ChatError('Invalid response from Mistral API', ChatProvider.Mistral);
     }
 
     return content;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new ChatError(
-        `OpenAI API error: ${error.response?.data?.error || error.message}`,
-        ChatProvider.ChatGPT,
+        `Mistral API error: ${error.response?.data?.error || error.message}`,
+        ChatProvider.Mistral,
         error
       );
     }
-    throw new ChatError('Unknown error from OpenAI API', ChatProvider.ChatGPT, error);
+    throw new ChatError('Unknown error from Mistral API', ChatProvider.Mistral, error);
   }
 };
 
@@ -147,8 +147,8 @@ const tryWithRetry = async (
   retryCount = 0
 ): Promise<ChatResponse> => {
   try {
-    const response = await callOpenAIAPI(request);
-    return { response, provider: ChatProvider.ChatGPT };
+    const response = await callMistralAPI(request);
+    return { response, provider: ChatProvider.Mistral };
   } catch (error) {
     if (retryCount < MAX_RETRIES) {
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));

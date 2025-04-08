@@ -4,6 +4,7 @@ import AppRoutes from './routes'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import { AiSupport } from './components/AiSupport'
+import ScrollToTop from './components/ScrollToTop'
 
 function AppContent() {
   const location = useLocation();
@@ -12,6 +13,7 @@ function AppContent() {
   return (
     <CartProvider>
       <div className="min-h-screen flex flex-col">
+        <ScrollToTop />
         {!isAdminRoute && <Navbar />}
         <main className="flex-grow">
           <AppRoutes />
