@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User, Loader2, ChevronRight } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Loader2, ChevronRight, Zap, Wifi, Server, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { chatService, ChatProvider, ChatRequest } from '@/lib/chatService';
+import { toast } from 'react-hot-toast';
+import { Toggle } from './ui/Toggle';
 
 interface Message {
   role: 'assistant' | 'user';
   content: string;
   timestamp: Date;
+  provider?: ChatProvider;
 }
 
 interface QuickQuestion {
@@ -35,6 +39,7 @@ export function AiSupport() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
+  const [activeProvider, setActiveProvider] = useState<ChatProvider | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -96,38 +101,46 @@ export function AiSupport() {
     setShowQuickQuestions(false);
 
     try {
-      const response = await fetch('http://localhost:3001/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          context: "Je bent de AI-assistent van ApotheCare. Je helpt klanten met vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten. Wees altijd behulpzaam maar herinner gebruikers eraan om voor medisch advies een zorgprofessional te raadplegen.",
-        }),
-      });
+      const history = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
 
-      if (!response.ok) throw new Error('Failed to get response');
+      const chatRequest: ChatRequest = {
+        message: userMessage.content,
+        context: "Je bent de professionele AI-assistent van ApotheCare. Je communiceert in een zakelijke en vriendelijke toon in het Nederlands. Je helpt klanten met vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten. Je gebruikt formele 'u' in plaats van informele 'je'. Je geeft duidelijke en accurate informatie, maar herinnert gebruikers er altijd aan om voor medisch advies een zorgprofessional te raadplegen. Je houdt je antwoorden beknopt en professioneel.",
+        history: history
+      };
 
-      const data = await response.json();
+      setActiveProvider(ChatProvider.ChatGPT);
+      const result = await chatService.sendMessage(chatRequest);
       
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.response,
+        content: result.response,
         timestamp: new Date(),
+        provider: result.provider
       };
 
+      setActiveProvider(result.provider);
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
       const errorMessage: Message = {
         role: 'assistant',
         content: "Excuses, maar ik kan momenteel geen verbinding maken. Probeer het later opnieuw of neem contact op met ons klantenserviceteam.",
         timestamp: new Date(),
+        provider: ChatProvider.LocalLLM
       };
       setMessages(prev => [...prev, errorMessage]);
+      setActiveProvider(ChatProvider.LocalLLM);
+      
+      toast.error("Kan geen verbinding maken met AI-diensten. Controleer uw internetverbinding.", {
+        duration: 4000,
+        position: 'bottom-center',
+      });
     } finally {
       setIsLoading(false);
+      setTimeout(() => setActiveProvider(null), 2000);
     }
   };
 
@@ -135,6 +148,30 @@ export function AiSupport() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  // Get icon for current provider
+  const getProviderIcon = (provider?: ChatProvider) => {
+    switch(provider) {
+      case ChatProvider.ChatGPT:
+        return <Zap className="w-4 h-4 text-indigo-500" />;
+      case ChatProvider.LocalLLM:
+        return <Server className="w-4 h-4 text-emerald-500" />;
+      default:
+        return null;
+    }
+  };
+
+  // Get tooltip text for provider
+  const getProviderTooltip = (provider?: ChatProvider) => {
+    switch(provider) {
+      case ChatProvider.ChatGPT:
+        return "Aangedreven door ChatGPT";
+      case ChatProvider.LocalLLM:
+        return "Aangedreven door lokale AI";
+      default:
+        return "";
     }
   };
 
@@ -173,7 +210,18 @@ export function AiSupport() {
                 </div>
                 <div>
                   <h3 className="font-medium">ApotheCare Assistent</h3>
-                  <p className="text-xs text-emerald-100">Beschikbaar 24/7</p>
+                  <div className="text-xs text-emerald-100 flex items-center gap-1">
+                    <span>Beschikbaar 24/7</span>
+                    {activeProvider && (
+                      <div 
+                        className="ml-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 text-[10px]"
+                        title={getProviderTooltip(activeProvider)}
+                      >
+                        {getProviderIcon(activeProvider)}
+                        {activeProvider === ChatProvider.ChatGPT && <span>ChatGPT</span>}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <button
@@ -183,7 +231,7 @@ export function AiSupport() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
+            
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-emerald-50/50">
               {messages.length === 0 ? (
@@ -248,13 +296,26 @@ export function AiSupport() {
                         "max-w-[80%] rounded-2xl p-3",
                         message.role === 'user'
                           ? "bg-gradient-to-r from-emerald-600 to-teal-500 text-white"
-                          : "bg-white border border-emerald-100 shadow-sm text-gray-900"
+                          : "bg-white border border-gray-100 text-gray-700 shadow-sm"
                       )}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      <p className="text-xs mt-1 opacity-70">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                      <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                      <div className="flex items-center justify-between mt-1 text-xs opacity-70">
+                        <span>
+                          {message.timestamp.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        {message.role === 'assistant' && message.provider && (
+                          <div 
+                            className="flex items-center gap-1"
+                            title={getProviderTooltip(message.provider)}
+                          >
+                            {getProviderIcon(message.provider)}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {message.role === 'user' && (
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 flex items-center justify-center flex-shrink-0">
@@ -264,16 +325,19 @@ export function AiSupport() {
                   </div>
                 ))
               )}
+              
               {isLoading && (
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                     <Bot className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <div className="bg-white border border-emerald-100 rounded-2xl p-3 shadow-sm">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce [animation-delay:-0.3s]" />
-                      <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce [animation-delay:-0.15s]" />
-                      <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" />
+                  <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                      <span className="text-sm text-gray-500">
+                        {activeProvider === ChatProvider.ChatGPT && "Verbinden met ChatGPT..."}
+                        {!activeProvider && "Antwoord genereren..."}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -281,29 +345,40 @@ export function AiSupport() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-4 border-t border-emerald-100 bg-white">
-              <div className="flex gap-2">
+            {/* Input Area */}
+            <div className="p-4 border-t border-gray-100 bg-white">
+              <div className="flex items-end gap-2">
                 <textarea
                   ref={inputRef}
                   value={input}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyPress}
-                  placeholder="Typ uw vraag..."
-                  className="flex-1 resize-none rounded-xl border border-emerald-200 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px] max-h-[150px] overflow-y-auto text-sm"
-                  style={{ height: '44px' }}
+                  placeholder="Typ uw vraag hier..."
+                  className="flex-1 max-h-32 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                  style={{ height: '48px' }}
                 />
                 <button
                   onClick={() => handleSend()}
-                  disabled={!input.trim() || isLoading}
-                  className="p-3 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 group"
+                  disabled={isLoading || !input.trim()}
+                  className={cn(
+                    "p-3 rounded-xl flex items-center justify-center",
+                    input.trim() && !isLoading
+                      ? "bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-md hover:shadow-lg transition-shadow"
+                      : "bg-gray-100 text-gray-400"
+                  )}
                 >
-                  <Send className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
                 </button>
               </div>
-              <p className="mt-2 text-xs text-gray-500 text-center">
-                Voor medisch advies raden wij aan een zorgprofessional te raadplegen.
-              </p>
+              <div className="mt-2 text-center">
+                <p className="text-xs text-gray-400">
+                  Voor persoonlijk medisch advies, raadpleeg altijd een zorgprofessional
+                </p>
+              </div>
             </div>
           </motion.div>
         )}
