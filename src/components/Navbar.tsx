@@ -1,18 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Menu, X, Search, User, LogOut, ChevronDown, Package, Settings, Bell } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { api } from '@/lib/api';
+import { toast } from 'react-hot-toast';
+
+interface UserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ firstName: string; lastName: string } | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const { totalItems } = useCart();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchQuery = searchParams.get('q') || '';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,12 +36,24 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    setIsAuthenticated(!!token);
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await api.getProfile();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Failed to fetch user profile:', error);
+          handleLogout();
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -43,10 +68,24 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    api.logout();
     setIsAuthenticated(false);
+    setUser(null);
     setIsUserMenuOpen(false);
     navigate('/login');
+    toast.success('Successfully logged out');
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchParams({ q: query });
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSearchOpen(false);
+    if (searchQuery) {
+      navigate(`/products?q=${encodeURIComponent(searchQuery)}`);
+    }
   };
 
   const navItems = [
@@ -54,7 +93,6 @@ const Navbar = () => {
     { name: 'Producten', path: '/products' },
     { name: 'Categorieën', path: '/categories' },
     { name: 'Over Ons', path: '/about' },
-    { name: 'Contact', path: '/contact' },
   ];
 
   return (
@@ -68,7 +106,14 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8">
+              <img 
+                src="/logo.svg" 
+                alt="ApotheCare Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
               ApotheCare
             </span>
@@ -88,10 +133,63 @@ const Navbar = () => {
           </div>
 
           {/* Search, Cart, and User Menu */}
-          <div className="hidden md:flex items-center space-x-6">
-            <button className="text-gray-600 hover:text-emerald-500 transition-colors duration-200">
+          <div className="flex items-center space-x-4" ref={userMenuRef}>
+            <button 
+              onClick={() => {
+                setIsSearchOpen(true);
+                setTimeout(() => searchInputRef.current?.focus(), 0);
+              }}
+              className="text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+            >
               <Search className="h-5 w-5" />
             </button>
+
+            {/* Search Modal */}
+            <AnimatePresence>
+              {isSearchOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/5 backdrop-blur-[2px] z-50 flex items-start justify-center pt-32"
+                  onClick={() => setIsSearchOpen(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0, y: -20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: -20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="w-full max-w-3xl mx-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <form onSubmit={handleSearchSubmit} className="relative">
+                      <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition duration-500"></div>
+                        <div className="relative flex items-center gap-4 bg-white/80 backdrop-blur-md rounded-2xl p-4 shadow-lg border border-white/20">
+                          <Search className="w-6 h-6 text-emerald-500" />
+                          <input
+                            ref={searchInputRef}
+                            type="text"
+                            placeholder="Zoek producten..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchParams({ q: e.target.value })}
+                            className="w-full bg-transparent border-none outline-none text-xl placeholder:text-gray-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setIsSearchOpen(false)}
+                            className="p-2 hover:bg-emerald-50/50 rounded-full transition-colors"
+                          >
+                            <X className="w-5 h-5 text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <Link
               to="/cart"
               className="relative text-gray-600 hover:text-emerald-500 transition-colors duration-200"
@@ -108,87 +206,97 @@ const Navbar = () => {
               )}
             </Link>
 
-            <div className="relative" ref={userMenuRef}>
-              {isAuthenticated ? (
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
-                >
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+            {isAuthenticated ? (
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+              >
+                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                  {user ? (
+                    <span className="text-sm font-medium text-emerald-600">
+                      {user.firstName[0]}
+                    </span>
+                  ) : (
                     <User className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-              ) : (
-                <Link
-                  to="/login"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                    <User className="h-4 w-4 text-gray-600" />
-                  </div>
-                </Link>
-              )}
+                  )}
+                </div>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center space-x-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <User className="h-4 w-4 text-gray-600" />
+                </div>
+              </Link>
+            )}
 
-              <AnimatePresence>
-                {isUserMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-2 border border-gray-100"
-                  >
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">{user ? `${user.firstName} ${user.lastName}` : 'Mijn Account'}</p>
-                    </div>
-                    <div className="py-1">
-                      <Link
-                        to="/profile"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <User className="h-4 w-4 mr-3" />
-                        Profiel
-                      </Link>
-                      <Link
-                        to="/orders"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Package className="h-4 w-4 mr-3" />
-                        Bestellingen
-                      </Link>
-                      <Link
-                        to="/notifications"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Bell className="h-4 w-4 mr-3" />
-                        Notificaties
-                      </Link>
-                      <Link
-                        to="/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Settings className="h-4 w-4 mr-3" />
-                        Instellingen
-                      </Link>
-                    </div>
-                    <div className="px-4 py-2 border-t border-gray-100">
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                      >
-                        <LogOut className="h-4 w-4 mr-3" />
-                        Uitloggen
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <AnimatePresence>
+              {isUserMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-2 border border-gray-100"
+                  style={{ top: '100%' }}
+                >
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user ? `${user.firstName} ${user.lastName}` : 'Mijn Account'}
+                    </p>
+                    {user && (
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    )}
+                  </div>
+                  <div className="py-1">
+                    <Link
+                      to="/profile"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4 mr-3" />
+                      Profiel
+                    </Link>
+                    <Link
+                      to="/orders"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Package className="h-4 w-4 mr-3" />
+                      Bestellingen
+                    </Link>
+                    <Link
+                      to="/notifications"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Bell className="h-4 w-4 mr-3" />
+                      Notificaties
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors duration-200"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Settings className="h-4 w-4 mr-3" />
+                      Instellingen
+                    </Link>
+                  </div>
+                  <div className="px-4 py-2 border-t border-gray-100">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    >
+                      <LogOut className="h-4 w-4 mr-3" />
+                      Uitloggen
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Mobile Menu Button */}
@@ -225,7 +333,13 @@ const Navbar = () => {
             </Link>
           ))}
           <div className="flex items-center space-x-4 px-3 py-2">
-            <button className="text-gray-600 hover:text-emerald-500 transition-colors duration-200">
+            <button 
+              onClick={() => {
+                setIsSearchOpen(true);
+                setTimeout(() => searchInputRef.current?.focus(), 0);
+              }}
+              className="text-gray-600 hover:text-emerald-500 transition-colors duration-200"
+            >
               <Search className="h-5 w-5" />
             </button>
             <Link
@@ -277,7 +391,6 @@ const Navbar = () => {
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Uitloggen
               </button>

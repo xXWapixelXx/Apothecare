@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { api } from '@/lib/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -19,26 +22,37 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Inloggen mislukt');
+      const user = await api.login(formData.email, formData.password);
+      toast.success('Succesvol ingelogd!');
+      
+      // Check if we should redirect to admin panel
+      if (user.role === 'ADMIN') {
+        const from = location.state?.from?.pathname || '/admin';
+        navigate(from, { replace: true });
+      } else {
+        navigate('/');
       }
 
-      // Store token and user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/profile');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Er is iets misgegaan bij het inloggen');
+      // Refresh the page after a short delay to ensure the navigation is complete
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      // Check if it's an axios error with response
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'Ongeldige inloggegevens';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } else if (!navigator.onLine) {
+        setError('Geen internetverbinding');
+        toast.error('Geen internetverbinding');
+      } else {
+        setError('Server niet bereikbaar. Probeer het later opnieuw.');
+        toast.error('Server niet bereikbaar');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -181,7 +195,7 @@ const LoginPage = () => {
               }`}
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
                   Inloggen

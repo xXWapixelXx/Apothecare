@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Search, Filter, ShoppingCart, Star, Heart, ChevronLeft, ChevronRight, X, Tag, Package, Truck, Shield, Clock } from 'lucide-react'
+import { ArrowRight, Search, Filter, ShoppingCart, Star, Heart, ChevronLeft, ChevronRight, X, Tag, Package, Truck, Shield, Clock, ChevronDown } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import Loading from '../components/Loading'
 import Error from '../components/Error'
@@ -14,8 +14,6 @@ interface Product {
   price: number
   image: string
   category: string
-  rating: number
-  reviewCount: number
   stock: number
   discount?: number
   isNew?: boolean
@@ -32,12 +30,11 @@ interface ErrorResponse {
 const ITEMS_PER_PAGE = 8
 
 export default function ProductsPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const { addItem } = useCart()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [sortBy, setSortBy] = useState('popular')
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100])
@@ -48,24 +45,40 @@ export default function ProductsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
+  const productsRef = useRef<HTMLDivElement>(null)
 
+  const searchQuery = searchParams.get('q') || ''
   const selectedCategoryParam = searchParams.get('category') || ''
   const selectedSortParam = searchParams.get('sort') || 'newest'
 
   useEffect(() => {
     fetchProducts()
-  }, [selectedCategoryParam, selectedSortParam])
+  }, [selectedCategory, sortBy])
 
   const fetchProducts = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`http://localhost:3001/api/products?category=${selectedCategoryParam}&sortBy=${selectedSortParam}`)
+      
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (selectedCategory) {
+        params.append('category', selectedCategory)
+      }
+      if (sortBy) {
+        params.append('sortBy', sortBy)
+      }
+
+      const response = await fetch(`http://localhost:3001/api/products?${params.toString()}`)
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to fetch products' })) as ErrorResponse
+        const errorData = await response.json()
+        console.error('Server error response:', errorData)
         throw new Error(errorData.error || 'Failed to fetch products')
       }
+      
       const data = await response.json()
+      console.log('Received products:', data)
       setProducts(data)
     } catch (err) {
       console.error('Error fetching products:', err)
@@ -81,23 +94,18 @@ export default function ProductsPage() {
   }
 
   const handleCategoryChange = (category: string) => {
-    if (category) {
-      searchParams.set('category', category)
-    } else {
-      searchParams.delete('category')
-    }
-    setSearchParams(searchParams)
+    console.log('Changing category to:', category)
+    // If clicking the already selected category, deselect it
+    setSelectedCategory(prevCategory => prevCategory === category ? '' : category)
+    // Scroll to products section with smooth animation
+    productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
-    const matchesCategory = !selectedCategory || product.category === selectedCategory
-    const matchesBrand = !selectedBrand || product.brand === selectedBrand
-    const matchesTags = selectedTags.length === 0 || 
-      selectedTags.every(tag => product.tags?.includes(tag))
-    return matchesSearch && matchesPrice && matchesCategory && matchesBrand && matchesTags
+    const matchesSearch = !searchQuery || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesSearch
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -106,10 +114,10 @@ export default function ProductsPage() {
         return a.price - b.price
       case 'price-desc':
         return b.price - a.price
-      case 'rating':
-        return b.rating - a.rating
-      case 'newest':
-        return 0 // Implement based on your data structure
+      case 'name-asc':
+        return a.name.localeCompare(b.name)
+      case 'name-desc':
+        return b.name.localeCompare(a.name)
       default:
         return 0
     }
@@ -148,34 +156,97 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-teal-600/20"></div>
-        <div className="container mx-auto px-4 py-24 relative">
+      <div className="relative min-h-[600px] overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+        {/* Animated background shapes */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Large gradient circles */}
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-emerald-300/30 to-teal-300/30 rounded-full blur-3xl animate-float-slow"></div>
+          <div className="absolute top-1/2 -right-48 w-96 h-96 bg-gradient-to-br from-cyan-300/30 to-emerald-300/30 rounded-full blur-3xl animate-float-slow-reverse"></div>
+          <div className="absolute -bottom-24 left-1/3 w-96 h-96 bg-gradient-to-br from-teal-300/30 to-cyan-300/30 rounded-full blur-3xl animate-float"></div>
+          
+          {/* Pattern overlay */}
+          <div className="absolute inset-0" style={{ 
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2320B2AA' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            opacity: 0.5
+          }}></div>
+
+          {/* Floating elements */}
+          <div className="absolute top-20 left-20 w-12 h-12 border-4 border-emerald-200/50 rounded-lg animate-float-slow transform rotate-45"></div>
+          <div className="absolute top-40 right-40 w-8 h-8 border-4 border-teal-200/50 rounded-full animate-float"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 border-4 border-cyan-200/50 rounded-lg animate-float-slow-reverse transform -rotate-12"></div>
+          
+          {/* Small decorative dots */}
+          <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+          <div className="absolute top-1/3 left-1/3 w-2 h-2 bg-teal-400 rounded-full animate-pulse delay-300"></div>
+          <div className="absolute bottom-1/4 right-1/3 w-2 h-2 bg-cyan-400 rounded-full animate-pulse delay-700"></div>
+        </div>
+
+        {/* Content with backdrop blur */}
+        <div className="relative container mx-auto px-4 py-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <h1 className="text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-6xl font-bold text-gray-900 mb-6 drop-shadow-sm">
               Ontdek Onze{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">
-                Producten
+              <span className="relative inline-block">
+                <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">
+                  Producten
+                </span>
+                <span className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-emerald-200 to-teal-200 -rotate-1 rounded"></span>
               </span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-600 mb-8 drop-shadow-sm">
               Vind de perfecte gezondheidsproducten voor jouw behoeften.
             </p>
-            <div className="relative max-w-xl mx-auto">
-              <input
-                type="text"
-                placeholder="Zoek een product..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-6 py-4 rounded-full border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all duration-300 pl-12"
-              />
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+
+            {/* Category Pills - made more compact */}
+            <div className="flex flex-wrap justify-center gap-2 mb-6 mt-12">
+              {['Pijnstillers', 'Vitamines & Supplementen', 'Verzorging', 'EHBO'].map((category) => (
+                <motion.button
+                  key={category}
+                  onClick={() => handleCategoryChange(category)}
+                  whileHover={{ scale: 1.05, y: -1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 shadow-sm backdrop-blur-md ${
+                    selectedCategory === category
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/25'
+                      : 'bg-white/30 text-gray-700 hover:bg-white/50 hover:text-emerald-600'
+                  }`}
+                >
+                  {category}
+                </motion.button>
+              ))}
             </div>
+
+            {/* Scroll to Products Button */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              className="mt-8"
+            >
+              <motion.button
+                onClick={() => productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="group relative inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/25 transition-all duration-300"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="relative z-10 font-medium text-base">
+                  Bekijk alle producten
+                </span>
+                <motion.div
+                  className="relative z-10"
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </motion.div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 blur-lg opacity-0 group-hover:opacity-50 transition-opacity duration-300" />
+              </motion.button>
+            </motion.div>
           </motion.div>
         </div>
       </div>
@@ -214,17 +285,20 @@ export default function ProductsPage() {
               </button>
             </div>
           </div>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 rounded-full border-2 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all duration-300"
-          >
-            <option value="popular">Meest populair</option>
-            <option value="price-asc">Prijs: Laag naar hoog</option>
-            <option value="price-desc">Prijs: Hoog naar laag</option>
-            <option value="rating">Best beoordeeld</option>
-            <option value="newest">Nieuwste eerst</option>
-          </select>
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="appearance-none w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 cursor-pointer hover:border-emerald-500 transition-colors focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            >
+              <option value="popular">Meest populair</option>
+              <option value="price-asc">Prijs: Laag naar hoog</option>
+              <option value="price-desc">Prijs: Hoog naar laag</option>
+              <option value="name-asc">Naam: A tot Z</option>
+              <option value="name-desc">Naam: Z tot A</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* Filter Panel */}
@@ -251,11 +325,11 @@ export default function ProductsPage() {
                     >
                       Alle categorieën
                     </button>
-                    {['Vitaminen', 'Supplementen', 'Medicijnen', 'Persoonlijke Verzorging', 'EHBO', 'Gezondheid'].map(
+                    {['Pijnstillers', 'Vitamines & Supplementen', 'Verzorging', 'EHBO'].map(
                       (category) => (
                         <button
                           key={category}
-                          onClick={() => setSelectedCategory(category)}
+                          onClick={() => handleCategoryChange(category)}
                           className={`block w-full text-left px-3 py-2 rounded-lg ${
                             selectedCategory === category
                               ? 'bg-emerald-100 text-emerald-800'
@@ -324,7 +398,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Products Grid/List */}
-      <div className="container mx-auto px-4 py-12">
+      <div ref={productsRef} className="container mx-auto px-4 py-12">
         <div className="flex justify-between items-center mb-6">
           <div className="text-sm text-gray-600">
             {sortedProducts.length} producten gevonden
@@ -395,23 +469,6 @@ export default function ProductsPage() {
 
                   {/* Content */}
                   <div className={viewMode === 'grid' ? "p-6" : "flex-1"}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(product.rating)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        ({product.reviewCount})
-                      </span>
-                    </div>
                     <h3 className={`font-bold text-gray-900 mb-2 ${viewMode === 'grid' ? 'text-xl' : 'text-2xl'}`}>
                       {product.name}
                     </h3>
@@ -558,23 +615,6 @@ export default function ProductsPage() {
                 </button>
               </div>
               <div className="p-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.floor(quickViewProduct.rating)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    ({quickViewProduct.reviewCount} beoordelingen)
-                  </span>
-                </div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
                   {quickViewProduct.name}
                 </h2>

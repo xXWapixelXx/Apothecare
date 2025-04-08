@@ -1,0 +1,6 @@
+torch==2.2.0
+transformers==4.38.2
+accelerate==0.27.2
+optimum==1.16.1
+auto-gptq==0.6.0
+python-dotenv==1.0.1 
