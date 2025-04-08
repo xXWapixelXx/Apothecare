@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { getEnvVar, isDevelopment } from './env';
+import { getEnvVar } from './env';
 
 // Configuration
 const TIMEOUT_MS = 10000;
@@ -16,7 +16,7 @@ export enum ChatProvider {
 export class ChatError extends Error {
   constructor(
     message: string,
-    public provider: string,
+    public provider: ChatProvider,
     public originalError?: unknown
   ) {
     super(message);
@@ -34,143 +34,148 @@ export interface ChatRequest {
 
 // Interface for chat responses
 export interface ChatResponse {
-  content: string;
-  role: string;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
+  response: string;
+  provider: ChatProvider;
 }
 
 // System prompt template
-const SYSTEM_PROMPT = `You are a helpful AI assistant for a pharmacy webshop. 
-You can help customers with:
-- Product information and recommendations
-- Order status and tracking
-- General health and wellness advice
-- Prescription medication information
-- Shipping and delivery questions
-
-Please be professional, accurate, and always prioritize customer safety.`;
+const SYSTEM_PROMPT = "Je bent de professionele AI-assistent van ApotheCare. Je communiceert in een zakelijke en vriendelijke toon in het Nederlands. Je helpt klanten met vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten. Je gebruikt formele 'u' in plaats van informele 'je'. Je geeft duidelijke en accurate informatie, maar herinnert gebruikers er altijd aan om voor medisch advies een zorgprofessional te raadplegen. Je houdt je antwoorden beknopt en professioneel.";
 
 /**
  * Call the local LLM API
  */
-async function callLocalLLM(message: string): Promise<ChatResponse> {
+const callLocalLLM = async (request: ChatRequest): Promise<string> => {
   try {
-    const response = await axios.post('/api/chat', {
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: message }
-      ]
-    });
-
-    if (!response.data?.choices?.[0]?.message?.content) {
-      throw new ChatError('Invalid response from local LLM', 'local');
+    const apiUrl = getEnvVar('VITE_API_URL');
+    if (!apiUrl) {
+      throw new ChatError('API URL is not configured', ChatProvider.LocalLLM);
     }
 
-    return {
-      content: response.data.choices[0].message.content,
-      role: 'assistant',
-      usage: response.data.usage
-    };
+    const response = await axios.post<{ response: string }>(`${apiUrl}/chat`, {
+      message: request.message,
+      context: request.context || SYSTEM_PROMPT
+    }, {
+      timeout: request.timeout || TIMEOUT_MS
+    });
+
+    if (!response.data?.response) {
+      throw new ChatError('Invalid response from local LLM', ChatProvider.LocalLLM);
+    }
+
+    return response.data.response;
   } catch (error) {
-    if (error instanceof AxiosError) {
+    if (axios.isAxiosError(error)) {
       throw new ChatError(
         `Local LLM API error: ${error.response?.data?.error || error.message}`,
-        'local',
+        ChatProvider.LocalLLM,
         error
       );
     }
-    throw error;
+    throw new ChatError('Unknown error from local LLM', ChatProvider.LocalLLM, error);
   }
-}
+};
+
+/**
+ * Get API key from environment variables
+ */
+const getAPIKey = (): string | null => {
+  const openaiApiKey = getEnvVar('VITE_OPENAI_API_KEY');
+  return openaiApiKey && !openaiApiKey.includes('YOUR_') && !openaiApiKey.includes('your_') 
+    ? openaiApiKey 
+    : null;
+};
 
 /**
  * Call the OpenAI API
  */
-async function callOpenAIAPI(message: string): Promise<ChatResponse> {
-  const apiKey = getEnvVar('OPENAI_API_KEY');
-  if (!apiKey) {
-    throw new ChatError('OpenAI API key not found', 'openai');
-  }
-
+const callOpenAIAPI = async (request: ChatRequest): Promise<string> => {
   try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
+    const openaiApiKey = getAPIKey();
+    
+    if (!openaiApiKey) {
+      throw new ChatError('OpenAI API key is missing', ChatProvider.ChatGPT);
+    }
+    
+    const response = await axios.post<{
+      choices: Array<{ message: { content: string } }>;
+    }>('https://api.openai.com/v1/chat/completions', {
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: request.context || SYSTEM_PROMPT
+        },
+        ...(request.history || []),
+        {
+          role: "user",
+          content: request.message
         }
-      }
-    );
+      ],
+      temperature: 0.7,
+      max_tokens: 500
+    }, {
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: request.timeout || TIMEOUT_MS
+    });
 
-    if (!response.data?.choices?.[0]?.message?.content) {
-      throw new ChatError('Invalid response from OpenAI API', 'openai');
+    const content = response.data?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new ChatError('Invalid response from OpenAI API', ChatProvider.ChatGPT);
     }
 
-    return {
-      content: response.data.choices[0].message.content,
-      role: 'assistant',
-      usage: response.data.usage
-    };
+    return content;
   } catch (error) {
-    if (error instanceof AxiosError) {
+    if (axios.isAxiosError(error)) {
       throw new ChatError(
-        `OpenAI API error: ${error.response?.data?.error?.message || error.message}`,
-        'openai',
+        `OpenAI API error: ${error.response?.data?.error || error.message}`,
+        ChatProvider.ChatGPT,
         error
       );
     }
-    throw error;
+    throw new ChatError('Unknown error from OpenAI API', ChatProvider.ChatGPT, error);
   }
-}
+};
 
 /**
- * Try a function with retries
+ * Try to get a response with retry logic
  */
-async function tryWithRetry<T>(
-  fn: () => Promise<T>,
-  retries = 3,
-  delay = 1000
-): Promise<T> {
+const tryWithRetry = async (
+  request: ChatRequest,
+  retryCount = 0
+): Promise<ChatResponse> => {
   try {
-    return await fn();
+    const response = await callOpenAIAPI(request);
+    return { response, provider: ChatProvider.ChatGPT };
   } catch (error) {
-    if (retries === 0) throw error;
-    await new Promise(resolve => setTimeout(resolve, delay));
-    return tryWithRetry(fn, retries - 1, delay);
-  }
-}
-
-/**
- * Send a message to the chat service
- */
-export async function sendMessage(message: string): Promise<ChatResponse> {
-  if (isDevelopment()) {
-    console.log('Sending message:', message);
-  }
-
-  try {
-    // Try local LLM first
-    return await tryWithRetry(() => callLocalLLM(message));
-  } catch (error) {
-    if (isDevelopment()) {
-      console.warn('Local LLM failed, falling back to OpenAI:', error);
+    if (retryCount < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+      return tryWithRetry(request, retryCount + 1);
     }
-
-    // Fall back to OpenAI
-    return await tryWithRetry(() => callOpenAIAPI(message));
+    
+    try {
+      const localResponse = await callLocalLLM(request);
+      return { response: localResponse, provider: ChatProvider.LocalLLM };
+    } catch (localError) {
+      throw localError;
+    }
   }
-} 
+};
+
+/**
+ * Main chat service function
+ */
+export const chatService = {
+  async sendMessage(request: ChatRequest): Promise<ChatResponse> {
+    try {
+      return await tryWithRetry(request);
+    } catch (error) {
+      return { 
+        response: "Excuses, er is een probleem met onze AI-diensten. Probeer het later opnieuw of neem contact op met onze klantenservice.", 
+        provider: ChatProvider.LocalLLM 
+      };
+    }
+  }
+}; 
