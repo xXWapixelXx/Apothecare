@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   Users,
   Package,
@@ -13,6 +14,7 @@ import {
   Star,
   Loader2,
   RefreshCw,
+  Store,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -197,13 +199,13 @@ export default function DashboardPage() {
             Welcome back! Here's what's happening with your pharmacy today.
           </p>
         </div>
-        <button
-          onClick={fetchDashboardStats}
-          className="flex items-center gap-2 px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+        <Link
+          to="/"
+          className="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
         >
-          <RefreshCw className="w-4 h-4" />
-          Refresh Data
-        </button>
+          <Store className="w-4 h-4" />
+          Return to Webshop
+        </Link>
       </div>
 
       {/* Stats Grid */}
