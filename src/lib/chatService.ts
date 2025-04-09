@@ -38,8 +38,15 @@ export interface ChatResponse {
   provider: ChatProvider;
 }
 
-// System prompt template
-const SYSTEM_PROMPT = "Je bent de professionele AI-assistent van ApotheCare. Je communiceert in een zakelijke en vriendelijke toon in het Nederlands. Je helpt klanten met vragen over medicijnen, gezondheidsadvies en onze online apotheekdiensten. Je gebruikt formele 'u' in plaats van informele 'je'. Je geeft duidelijke en accurate informatie, maar herinnert gebruikers er altijd aan om voor medisch advies een zorgprofessional te raadplegen. Je houdt je antwoorden beknopt en professioneel.";
+// Get system prompt from environment variables
+const getSystemPrompt = (): string => {
+  try {
+    return getEnvVar(ENV_KEYS.SYSTEM_PROMPT);
+  } catch (error) {
+    console.error('System prompt not found in environment variables');
+    throw new Error('System prompt configuration is missing');
+  }
+};
 
 /**
  * Call the local LLM API
@@ -53,7 +60,7 @@ const callLocalLLM = async (request: ChatRequest): Promise<string> => {
 
     const response = await axios.post<{ response: string }>(`${apiUrl}/chat`, {
       message: request.message,
-      context: request.context || SYSTEM_PROMPT
+      context: request.context || getSystemPrompt()
     }, {
       timeout: request.timeout || TIMEOUT_MS
     });
@@ -103,7 +110,7 @@ const callMistralAPI = async (request: ChatRequest): Promise<string> => {
       messages: [
         {
           role: "system",
-          content: request.context || SYSTEM_PROMPT
+          content: request.context || getSystemPrompt()
         },
         ...(request.history || []),
         {
