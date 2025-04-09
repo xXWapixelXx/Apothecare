@@ -103,11 +103,11 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-lg shadow-sm">
+      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage and view customer information
+            Manage your customer accounts and view their order history
           </p>
         </div>
         <div className="flex items-center gap-4">

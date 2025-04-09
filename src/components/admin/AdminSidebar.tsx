@@ -62,14 +62,17 @@ export default function AdminSidebar() {
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <AnimatePresence>
           {!isCollapsed && (
-            <motion.span
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xl font-bold text-emerald-600"
+              className="flex items-center space-x-2"
             >
-              ApotheCare
-            </motion.span>
+              <img src="/logo.svg" alt="ApotheCare Logo" className="h-6 w-6" />
+              <span className="text-xl font-bold text-emerald-600">
+                ApotheCare
+              </span>
+            </motion.div>
           )}
         </AnimatePresence>
         <button

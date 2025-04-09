@@ -13,7 +13,6 @@ import {
   ChevronUp,
   Loader2,
   Settings,
-  Bell,
   User,
   X,
   Upload,
@@ -21,7 +20,7 @@ import {
 import { toast } from "react-hot-toast";
 import { api } from "@/lib/api";
 import type { Product as ApiProduct } from "@/lib/api";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface Category {
   id: string;
@@ -261,12 +260,9 @@ export default function AdminProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <button className="p-2 text-gray-400 hover:text-gray-500">
-            <Bell className="w-5 h-5" />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-gray-500">
+          <Link to="/admin/settings" className="p-2 text-gray-400 hover:text-gray-500">
             <Settings className="w-5 h-5" />
-          </button>
+          </Link>
           <div className="flex items-center gap-3 pl-4 border-l">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-700">Admin User</p>

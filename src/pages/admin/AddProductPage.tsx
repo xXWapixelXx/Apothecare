@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Upload, Loader2, AlertCircle, ChevronLeft, Bell, Search, Settings, HelpCircle, User } from 'lucide-react';
+import { Upload, Loader2, AlertCircle, ChevronLeft, Search, Settings, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '@/lib/api';
 
@@ -126,16 +126,9 @@ export default function AddProductPage() {
 
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2">
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Help">
-                <HelpCircle className="w-5 h-5 text-gray-600" />
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Settings">
+              <Link to="/admin/settings" className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Settings">
                 <Settings className="w-5 h-5 text-gray-600" />
-              </button>
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative" title="Notifications">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              </Link>
             </div>
 
             <div className="hidden md:block w-px h-8 bg-gray-200"></div>

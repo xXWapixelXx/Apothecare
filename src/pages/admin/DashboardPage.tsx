@@ -201,9 +201,9 @@ export default function DashboardPage() {
         </div>
         <Link
           to="/"
-          className="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-sm"
         >
-          <Store className="w-4 h-4" />
+          <Store className="w-5 h-5 mr-2" />
           Return to Webshop
         </Link>
       </div>
