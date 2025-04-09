@@ -1,269 +1,324 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Settings,
-  User,
-  Lock,
-  Bell,
-  Mail,
-  Globe,
-  CreditCard,
-  Shield,
-  Save,
-} from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface SettingsSection {
-  id: string;
-  title: string;
-  icon: any;
-  description: string;
-}
-
-const sections: SettingsSection[] = [
-  {
-    id: 'profile',
-    title: 'Profile Settings',
-    icon: User,
-    description: 'Update your personal information and preferences',
-  },
-  {
-    id: 'security',
-    title: 'Security',
-    icon: Lock,
-    description: 'Manage your password and security settings',
-  },
-  {
-    id: 'notifications',
-    title: 'Notifications',
-    icon: Bell,
-    description: 'Configure how you receive notifications',
-  },
-  {
-    id: 'email',
-    title: 'Email Settings',
-    icon: Mail,
-    description: 'Manage your email preferences and templates',
-  },
-  {
-    id: 'website',
-    title: 'Website Settings',
-    icon: Globe,
-    description: 'Configure your website appearance and behavior',
-  },
-  {
-    id: 'payment',
-    title: 'Payment Settings',
-    icon: CreditCard,
-    description: 'Manage payment methods and processing',
-  },
-  {
-    id: 'privacy',
-    title: 'Privacy & Data',
-    icon: Shield,
-    description: 'Control your data and privacy settings',
-  },
-];
-
-export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState('profile');
-  const [formData, setFormData] = useState({
-    storeName: 'ApotheCare',
-    email: 'admin@apothecare.nl',
-    phone: '+31 6 12345678',
-    address: 'Amsterdam, Netherlands',
-    currency: 'EUR',
-    language: 'en',
-    timezone: 'Europe/Amsterdam',
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement settings update
-    toast.success('Settings saved successfully');
-  };
-
+const SettingsPage = () => {
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-lg shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage your store settings and preferences
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-lg">
-            <Settings className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm font-medium text-emerald-600">
-              System Settings
-            </span>
-          </div>
-        </div>
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+        <p className="text-muted-foreground">Manage your store and AI settings</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar */}
-        <div className="lg:w-64 space-y-2">
-          {sections.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                activeSection === section.id
-                  ? 'bg-emerald-50 text-emerald-600'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <section.icon className={`w-5 h-5 ${
-                activeSection === section.id ? 'text-emerald-600' : 'text-gray-400'
-              }`} />
-              <span className="text-sm font-medium">{section.title}</span>
-            </button>
-          ))}
-        </div>
+      <Tabs defaultValue="general" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="ai">AI & Chatbot</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+        </TabsList>
 
-        {/* Main Content */}
-        <div className="flex-1">
-          <motion.div
-            key={activeSection}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg shadow-sm"
-          >
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">
-                {sections.find((s) => s.id === activeSection)?.title}
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                {sections.find((s) => s.id === activeSection)?.description}
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Store Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.storeName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, storeName: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+        <TabsContent value="general" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Store Information</CardTitle>
+              <CardDescription>
+                Update your store details and contact information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="storeName">Store Name</Label>
+                  <Input id="storeName" placeholder="Apothecare" />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="storeEmail">Contact Email</Label>
+                  <Input id="storeEmail" type="email" placeholder="contact@apothecare.com" />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input id="phoneNumber" placeholder="+31 6 12345678" />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Currency
-                  </label>
-                  <select
-                    value={formData.currency}
-                    onChange={(e) =>
-                      setFormData({ ...formData, currency: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="USD">US Dollar (USD)</option>
-                    <option value="GBP">British Pound (GBP)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Language
-                  </label>
-                  <select
-                    value={formData.language}
-                    onChange={(e) =>
-                      setFormData({ ...formData, language: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="en">English</option>
-                    <option value="nl">Dutch</option>
-                    <option value="de">German</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Timezone
-                  </label>
-                  <select
-                    value={formData.timezone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, timezone: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="Europe/Amsterdam">Europe/Amsterdam</option>
-                    <option value="Europe/London">Europe/London</option>
-                    <option value="America/New_York">America/New_York</option>
-                  </select>
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">Timezone</Label>
+                  <Select defaultValue="europe-amsterdam">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="europe-amsterdam">Europe/Amsterdam</SelectItem>
+                      <SelectItem value="europe-london">Europe/London</SelectItem>
+                      <SelectItem value="america-newyork">America/New York</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  Save Changes
-                </button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Hours</CardTitle>
+              <CardDescription>Set your store's operating hours</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Monday - Friday</Label>
+                    <div className="text-sm text-muted-foreground">09:00 - 18:00</div>
+                  </div>
+                  <Button variant="outline">Edit</Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Saturday</Label>
+                    <div className="text-sm text-muted-foreground">10:00 - 16:00</div>
+                  </div>
+                  <Button variant="outline">Edit</Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Sunday</Label>
+                    <div className="text-sm text-muted-foreground">Closed</div>
+                  </div>
+                  <Button variant="outline">Edit</Button>
+                </div>
               </div>
-            </form>
-          </motion.div>
-        </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Assistant Configuration</CardTitle>
+              <CardDescription>Configure your AI chatbot settings</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable AI Assistant</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Allow customers to interact with AI chatbot
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>AI Provider</Label>
+                  <Select defaultValue="mistral">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select AI provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mistral">Mistral AI</SelectItem>
+                      <SelectItem value="local">Local LLM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">API Key</Label>
+                  <Input id="apiKey" type="password" placeholder="••••••••••••••••" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="systemPrompt">System Prompt</Label>
+                  <textarea 
+                    id="systemPrompt"
+                    className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="You are a helpful pharmacy assistant..."
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Chat History</CardTitle>
+              <CardDescription>Manage conversation logs and analytics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Store Chat History</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Keep record of customer conversations
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="space-y-0.5">
+                  <Label>Retention Period</Label>
+                  <Select defaultValue="30">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select retention period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                      <SelectItem value="365">1 year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Email Notifications</CardTitle>
+              <CardDescription>Configure when you receive email notifications</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>New Orders</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications for new orders
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Low Stock Alerts</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when products are running low
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Customer Messages</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Notifications for new customer inquiries
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Push Notifications</CardTitle>
+              <CardDescription>Browser notification settings</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Enable Push Notifications</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications in your browser
+                  </p>
+                </div>
+                <Switch />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="appearance" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme Settings</CardTitle>
+              <CardDescription>Customize your store's appearance</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Color Theme</Label>
+                <Select defaultValue="emerald">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select theme color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="emerald">Emerald</SelectItem>
+                    <SelectItem value="blue">Blue</SelectItem>
+                    <SelectItem value="purple">Purple</SelectItem>
+                    <SelectItem value="rose">Rose</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Dark Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Use dark theme
+                  </p>
+                </div>
+                <Switch />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Font Family</Label>
+                <Select defaultValue="inter">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select font family" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inter">Inter</SelectItem>
+                    <SelectItem value="roboto">Roboto</SelectItem>
+                    <SelectItem value="poppins">Poppins</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom Branding</CardTitle>
+              <CardDescription>Upload your store's logo and favicon</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Store Logo</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-20 w-20 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center">
+                      <p className="text-sm text-muted-foreground">No logo</p>
+                    </div>
+                    <Button variant="outline">Upload</Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Favicon</Label>
+                  <div className="flex items-center gap-4">
+                    <div className="h-20 w-20 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center">
+                      <p className="text-sm text-muted-foreground">No favicon</p>
+                    </div>
+                    <Button variant="outline">Upload</Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <div className="flex justify-end space-x-4">
+        <Button variant="outline">Cancel</Button>
+        <Button>Save Changes</Button>
       </div>
     </div>
   );
-} 
+};
+
+export default SettingsPage; 
